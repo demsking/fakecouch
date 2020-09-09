@@ -1,0 +1,36 @@
+{
+  "files": [
+    "lib/FakeCouch.ts",
+    "lib/FakeDatabase.ts"
+  ],
+  "compilerOptions": {
+    "allowJs": true,
+    "target": "ES2019",
+    "module": "CommonJS",
+    "strict": true,
+    "jsx": "preserve",
+    "importHelpers": true,
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "experimentalDecorators": false,
+    "sourceMap": false,
+    "baseUrl": ".",
+    "outDir": "dist",
+    "types": [
+      "node",
+      "jest"
+    ],
+    "lib": [
+      "ES2019"
+    ]
+  },
+  "include": [
+    "*.ts"
+  ],
+  "exclude": [
+    "dist",
+    "coverage",
+    "node_modules"
+  ]
+}
