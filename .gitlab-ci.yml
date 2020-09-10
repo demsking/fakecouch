@@ -31,21 +31,6 @@ test & coverage:
     paths:
       - coverage/
 
-pages:
-  stage: publish
-  dependencies:
-    - test & coverage
-  script:
-    - mv coverage/lcov-report/ public/
-  artifacts:
-    paths:
-      - public
-  only:
-    - master
-  environment:
-    name: coverage report
-    url: https://vuedoc.gitlab.io/parser
-
 package:
   stage: publish
   script:
