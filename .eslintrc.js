@@ -47,6 +47,7 @@ module.exports = {
     'import/prefer-default-export': 'off',
     'import/no-extraneous-dependencies': 'off',
     'import/no-cycle': 'off',
+    'import/first': 'off',
     'comma-dangle': ['error', 'never'],
     'prefer-destructuring': 'off',
     'semi': ['error', 'always'],
