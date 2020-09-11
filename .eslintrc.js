@@ -65,7 +65,7 @@ module.exports = {
     'guard-for-in': 'off',
     'no-nested-ternary': 'off',
     'object-curly-newline': 'off',
-    'array-bracket-spacing': [ 'error', 'always' ],
+    'array-bracket-spacing': [ 'error', 'never' ],
     'no-param-reassign': 'off',
     'default-case': 'off',
     'no-shadow': 'off',
