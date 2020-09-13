@@ -10,13 +10,24 @@ export namespace IFakeCouch {
   export type Request = express.Request & { query: Record<string, any>, body: Record<string, any> };
   export type ReplyFunctionReturns = [number] | [number, any] | [number, any, Headers];
   export type ReplyFunction = (req: Request) => ReplyFunctionReturns;
+
+  export type PrimitiveHandler = {
+    auth?: boolean;
+    status: number;
+    body?: any;
+    headers?: Headers;
+  };
+
+  export type FunctionHandler = ReplyFunction | [Function, ReplyFunction];
+
+  export type Handler = PrimitiveHandler | FunctionHandler;
+
   export type Scope = {
-    head: (path: any, code: ReplyFunction | [Function, ReplyFunction] | number, body?: any, headers?: Headers) => Scope;
-    get: (path: any, code: ReplyFunction | [Function, ReplyFunction] | number, body?: any, headers?: Headers) => Scope;
-    post: (path: any, code: ReplyFunction | [Function, ReplyFunction] | number, body?: any, headers?: Headers) => Scope;
-    put: (path: any, code: ReplyFunction | [Function, ReplyFunction] | number, body?: any, headers?: Headers) => Scope;
-    delete: (path: any, code: ReplyFunction | [Function, ReplyFunction] | number, body?: any, headers?: Headers) => Scope;
-    copy: (path: any, code: ReplyFunction | [Function, ReplyFunction] | number, body?: any, headers?: Headers) => Scope;
+    head: (path: any, handler: Handler) => Scope;
+    get: (path: any, handler: Handler) => Scope;
+    post: (path: any, handler: Handler) => Scope;
+    put: (path: any, handler: Handler) => Scope;
+    delete: (path: any, handler: Handler) => Scope;
   };
 
   export type Document = {
@@ -48,6 +59,7 @@ export namespace IFakeCouch {
 
     setup(): void;
     reset(): void;
+    authenticate(): void;
     addDatabase(dbname: string): Database;
   }
 }

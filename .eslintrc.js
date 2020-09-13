@@ -32,7 +32,6 @@ module.exports = {
     'no-fallthrough': 'off',
     'max-classes-per-file': 'off',
     'no-use-before-define': 'off',
-    'array-bracket-spacing': ['error', 'never'],
     'prefer-promise-reject-errors': 'off',
     '@typescript-eslint/ban-types': 'off',
     '@typescript-eslint/indent': ['error', 2],
@@ -48,7 +47,9 @@ module.exports = {
     'import/no-extraneous-dependencies': 'off',
     'import/no-cycle': 'off',
     'import/first': 'off',
-    'comma-dangle': ['error', 'never'],
+    'comma-dangle': ['error', {
+      functions: 'never'
+    }],
     'prefer-destructuring': 'off',
     'semi': ['error', 'always'],
     'class-methods-use-this': 'off',

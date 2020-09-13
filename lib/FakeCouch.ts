@@ -1,30 +1,27 @@
-/* eslint-disable no-console */
 /* eslint-disable global-require */
 /* eslint-disable @typescript-eslint/no-var-requires */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 const express = require('express');
 const bodyParser = require('body-parser');
-const pkg = require('../package.json');
 
 import { Application, Response, Request, Router } from 'express';
 import { v4 as uuid } from 'uuid';
 import { Server } from 'http';
 import { IFakeCouch } from '../typings/IFakeCouch';
 import FakeDatabase from './FakeDatabase';
+import pkg from '../package.json';
 
-const sendResponse = (res: Response, code: number, body?: any, headers?: IFakeCouch.Headers) => {
+const sendResponse = (res: Response, [code, body, headers = {}]: [number, any?, IFakeCouch.Headers?]) => {
   res.status(code);
 
   res.set({
+    ...headers,
     'Cache-Control': 'must-revalidate',
     'Content-Type': typeof body === 'string' ? 'text/plain' : 'application/json',
-    Server: 'CouchDB/3.1.0 (Erlang OTP/20)'
+    Server: `Fake CouchDB/${pkg.version}`,
+    Date: new Date().toUTCString()
   });
-
-  if (headers) {
-    res.set(headers);
-  }
 
   if (body) {
     res.send(body);
@@ -33,73 +30,32 @@ const sendResponse = (res: Response, code: number, body?: any, headers?: IFakeCo
   res.end();
 };
 
-function createScope(): { router: Router; scope: IFakeCouch.Scope; } {
-  const router: any = express.Router({
-    strict: true
-  });
-
-  const handler = (method: string) => (path: string, code: IFakeCouch.ReplyFunction | [Function, IFakeCouch.ReplyFunction] | number, body?: any, headers?: IFakeCouch.Headers): IFakeCouch.Scope => {
-    const middlewares: Function[] = [
-      bodyParser.json()
-    ];
-
-    if (code instanceof Array) {
-      middlewares.splice(0);
-      middlewares.push(code[0]);
-
-      code = code[1];
-    }
-
-    if (typeof code === 'function') {
-      middlewares.push((req: Request, res: Response) => {
-        const [responseCode, responseBody, responseHeaders] = (code as Function)(req);
-
-        sendResponse(res, responseCode, responseBody, responseHeaders);
-      });
-    } else {
-      middlewares.push((req: Request, res: Response) => sendResponse(res, code as number, body, headers));
-    }
-
-    router[method](path, middlewares);
-
-    return scope;
-  };
-
-  const scope: IFakeCouch.Scope = {
-    head: handler('head'),
-    get: handler('get'),
-    post: handler('post'),
-    put: handler('put'),
-    delete: handler('delete'),
-    copy: handler('copy')
-  };
-
-  return { router, scope };
-}
-
 export default class FakeCouchServer implements IFakeCouch.Server {
   serverPort: number;
   serveUrl: string;
   databases: Record<string, FakeDatabase> = {};
+  authenticated = false;
   server?: Server;
-  logger = false;
   scope!: IFakeCouch.Scope;
-  app!: Application;
+  app: Application;
 
   constructor({ port = 5984, logger = false }: IFakeCouch.Options) {
     this.serverPort = port;
     this.serveUrl = `http://localhost:${port}`;
-    this.logger = logger;
     this.app = express();
 
     this.app.set('x-powered-by', true);
     this.app.set('strict routing', true);
 
-    if (this.logger) {
+    if (logger) {
       this.app.use(require('morgan')('dev'));
     }
 
     this.mock();
+  }
+
+  authenticate(): void {
+    this.authenticated = true;
   }
 
   addDatabase(dbname: string): FakeDatabase {
@@ -110,14 +66,67 @@ export default class FakeCouchServer implements IFakeCouch.Server {
     return this.databases[dbname];
   }
 
-  buildIndexes(): void {
-    for (const dbname in this.databases) {
-      this.databases[dbname].buildIndexes();
+  handleAuth(req: Request, res: Response, next: Function): void {
+    if (req.headers.authorization || this.authenticated) {
+      next();
+    } else {
+      res.status(401);
+      res.json({
+        error: 'unauthorized',
+        reason: 'You are not a server admin.'
+      });
+      res.end();
     }
   }
 
+  createScope(): { router: Router; scope: IFakeCouch.Scope; } {
+    const router = express.Router({
+      strict: true
+    });
+
+    const auth = (req: Request, res: Response, next: Function) => this.handleAuth(req, res, next);
+    const build = (method: string) => (path: string, hander: IFakeCouch.Handler): IFakeCouch.Scope => {
+      const middlewares: Function[] = [];
+
+      if (hander instanceof Array) {
+        middlewares.push(...hander);
+      } else {
+        middlewares.push(bodyParser.json());
+
+        if (typeof hander === 'function') {
+          middlewares.unshift(auth);
+          middlewares.push((req: Request, res: Response) => sendResponse(res, hander(req)));
+        } else {
+          if (hander.auth !== false) {
+            middlewares.unshift(auth);
+          }
+
+          middlewares.push((req: Request, res: Response) => sendResponse(res, [
+            hander.status,
+            hander.body,
+            hander.headers
+          ]));
+        }
+      }
+
+      router[method](path, middlewares);
+
+      return scope;
+    };
+
+    const scope: IFakeCouch.Scope = {
+      head: build('head'),
+      get: build('get'),
+      post: build('post'),
+      put: build('put'),
+      delete: build('delete')
+    };
+
+    return { router, scope };
+  }
+
   mock(): void {
-    const { scope, router } = createScope();
+    const { scope, router } = this.createScope();
 
     this.scope = scope;
 
@@ -130,8 +139,8 @@ export default class FakeCouchServer implements IFakeCouch.Server {
     this.app.use('*', (req, res) => res.status(501).send(`No implementation for ${req.method} ${req.url}`));
 
     this.app.use((err: Error, req: Request, res: Response, next: Function) => {
-      console.error(err);
-      res.status(501).send('Something broke!');
+      process.stderr.write(`${err.stack}\n`);
+      res.status(500).send('Something broke!');
     });
   }
 
@@ -157,46 +166,58 @@ export default class FakeCouchServer implements IFakeCouch.Server {
        * GET /
        * @see https://docs.couchdb.org/en/latest/api/server/common.html#get--
        */
-      .get('/', 200, {
-        couchdb: 'Welcome',
-        uuid: uuid(),
-        git_sha: 'ff0feea20',
-        features: [
-          'access-ready',
-          'partitioned',
-          'pluggable-storage-engines',
-          'reshard',
-          'scheduler'
-        ],
-        vendor: {
-          name: pkg.author
-        },
-        version: '3.1.0'
-      })
-      .post('/_session', [bodyParser.urlencoded({ extended: false }), (req) => {
-        if (req.body.name) {
-          return [
-            200,
-            {
-              ok: true,
-              name: req.body.name,
-              roles: [
-                '_admin'
-              ]
-            },
-            {
-              AuthSession: '4f2493bfb74e5887effa9480cd7df538_c_eauoCcg2IgB2LabR9bHNxhkM; Version=1; Expires=Wed, 02-Sep-3000 06:33:37 GMT; Max-Age=600; Path=/; HttpOnly'
-            }
-          ];
+      .get('/', {
+        auth: false,
+        status: 200,
+        body: {
+          couchdb: 'Welcome',
+          uuid: uuid(),
+          git_sha: 'ff0feea20',
+          features: [
+            'access-ready'
+          ],
+          vendor: {
+            name: pkg.author
+          },
+          version: pkg.version
         }
+      })
+      /**
+       * POST /_session
+       * @see https://docs.couchdb.org/en/latest/api/server/authn.html#post--_session
+       */
+      .post('/_session', [
+        bodyParser.urlencoded({ extended: false }),
+        (req) => {
+          if (req.body.name && req.body.password) {
+            this.authenticated = true;
 
-        return [401];
-      }])
+            return [
+              200,
+              {
+                ok: true,
+                name: req.body.name,
+                roles: [
+                  '_admin'
+                ]
+              },
+              {
+                'Set-Cookie': 'AuthSession=4f2493bfb74e5887effa9480cd7df538_c_eauoCcg2IgB2LabR9bHNxhkM; Version=1; Expires=Wed, 02-Sep-3000 06:33:37 GMT; Max-Age=600; Path=/; HttpOnly'
+              }
+            ];
+          }
+
+          return [401];
+        }
+      ])
       /**
        * GET /_active_tasks
        * @see https://docs.couchdb.org/en/latest/api/server/common.html#get--_active_tasks
        */
-      .get('/_active_tasks', 501, 'Not Yet Implemented')
+      .get('/_active_tasks', {
+        status: 501,
+        body: 'Not Yet Implemented'
+      })
       /**
        * GET /_all_dbs
        * @see https://docs.couchdb.org/en/latest/api/server/common.html#get--_all_dbs
@@ -217,189 +238,235 @@ export default class FakeCouchServer implements IFakeCouch.Server {
        * GET /_cluster_setup
        * @see https://docs.couchdb.org/en/latest/api/server/common.html#get--_cluster_setup
        */
-      .get('/_cluster_setup', 200, {
-        state: 'cluster_disabled'
+      .get('/_cluster_setup', {
+        status: 200,
+        body: {
+          state: 'cluster_disabled'
+        }
       })
       /**
        * POST /_cluster_setup
        * @see https://docs.couchdb.org/en/latest/api/server/common.html#post--_cluster_setup
        */
-      .post('/_cluster_setup', 501, 'Not Yet Implemented')
+      .post('/_cluster_setup', {
+        status: 501,
+        body: 'Not Yet Implemented'
+      })
       /**
        * GET /_db_updates
        * @see https://docs.couchdb.org/en/latest/api/server/common.html#get--_db_updates
        */
-      .get('/_db_updates', 501, 'Not Yet Implemented')
+      .get('/_db_updates', {
+        status: 501,
+        body: 'Not Yet Implemented'
+      })
       /**
        * GET /_membership
        * @see https://docs.couchdb.org/en/latest/api/server/common.html#get--_membership
        */
-      .get('/_membership', 200, {
-        all_nodes: [
-          'node1@127.0.0.1'
-        ],
-        cluster_nodes: [
-          'node1@127.0.0.1'
-        ]
+      .get('/_membership', {
+        status: 200,
+        body: {
+          all_nodes: [
+            'node1@127.0.0.1'
+          ],
+          cluster_nodes: [
+            'node1@127.0.0.1'
+          ]
+        }
       })
       /**
        * POST /_replicate
        * @see https://docs.couchdb.org/en/latest/api/server/common.html#post--_replicate
        */
-      .post('/_replicate', 200, {
-        history: [
-          {
-            doc_write_failures: 0,
-            docs_read: 10,
-            docs_written: 10,
-            end_last_seq: 28,
-            end_time: 'Sun, 11 Aug 2013 20:38:50 GMT',
-            missing_checked: 10,
-            missing_found: 10,
-            recorded_seq: 28,
-            session_id: '142a35854a08e205c47174d91b1f9628',
-            start_last_seq: 1,
-            start_time: 'Sun, 11 Aug 2013 20:38:50 GMT'
-          },
-          {
-            doc_write_failures: 0,
-            docs_read: 1,
-            docs_written: 1,
-            end_last_seq: 1,
-            end_time: 'Sat, 10 Aug 2013 15:41:54 GMT',
-            missing_checked: 1,
-            missing_found: 1,
-            recorded_seq: 1,
-            session_id: '6314f35c51de3ac408af79d6ee0c1a09',
-            start_last_seq: 0,
-            start_time: 'Sat, 10 Aug 2013 15:41:54 GMT'
-          }
-        ],
-        ok: true,
-        replication_id_version: 3,
-        session_id: '142a35854a08e205c47174d91b1f9628',
-        source_last_seq: 28
+      .post('/_replicate', {
+        status: 200,
+        body: {
+          history: [
+            {
+              doc_write_failures: 0,
+              docs_read: 10,
+              docs_written: 10,
+              end_last_seq: 28,
+              end_time: 'Sun, 11 Aug 2013 20:38:50 GMT',
+              missing_checked: 10,
+              missing_found: 10,
+              recorded_seq: 28,
+              session_id: '142a35854a08e205c47174d91b1f9628',
+              start_last_seq: 1,
+              start_time: 'Sun, 11 Aug 2013 20:38:50 GMT'
+            },
+            {
+              doc_write_failures: 0,
+              docs_read: 1,
+              docs_written: 1,
+              end_last_seq: 1,
+              end_time: 'Sat, 10 Aug 2013 15:41:54 GMT',
+              missing_checked: 1,
+              missing_found: 1,
+              recorded_seq: 1,
+              session_id: '6314f35c51de3ac408af79d6ee0c1a09',
+              start_last_seq: 0,
+              start_time: 'Sat, 10 Aug 2013 15:41:54 GMT'
+            }
+          ],
+          ok: true,
+          replication_id_version: 3,
+          session_id: '142a35854a08e205c47174d91b1f9628',
+          source_last_seq: 28
+        }
       })
       /**
        * GET /_scheduler/jobs
        * @see https://docs.couchdb.org/en/latest/api/server/common.html#get--_scheduler-jobs
        */
-      .get('/_scheduler/jobs', 200, {
-        jobs: [],
-        offset: 0,
-        total_rows: 0
+      .get('/_scheduler/jobs', {
+        status: 200,
+        body: {
+          jobs: [],
+          offset: 0,
+          total_rows: 0
+        }
       })
       /**
        * GET /_scheduler/docs
        * @see https://docs.couchdb.org/en/latest/api/server/common.html#get--_scheduler-docs
        */
-      .get('/_scheduler/docs', 200, {
-        docs: [],
-        offset: 0,
-        total_rows: 0
+      .get('/_scheduler/docs', {
+        status: 200,
+        body: {
+          docs: [],
+          offset: 0,
+          total_rows: 0
+        }
       })
       /**
        * GET /_scheduler/docs/{replicator_db}
        * @see https://docs.couchdb.org/en/latest/api/server/common.html#get--_scheduler-docs-replicator_db
        */
-      .get('/_scheduler/docs/:replicator_db', 501, 'Not Yet Implemented')
+      .get('/_scheduler/docs/:replicator_db', {
+        status: 501,
+        body: 'Not Yet Implemented'
+      })
       /**
        * GET /_scheduler/docs/{replicator_db}/{docid}
        * @see https://docs.couchdb.org/en/latest/api/server/common.html#get--_scheduler-docs-replicator_db-docid
        */
-      .get('/_scheduler/docs/:replicator_db/:docid', 501, 'Not Yet Implemented')
+      .get('/_scheduler/docs/:replicator_db/:docid', {
+        status: 501,
+        body: 'Not Yet Implemented'
+      })
       /**
        * GET /_node/{node-name}
        * @see https://docs.couchdb.org/en/latest/api/server/common.html#get--_node-node-name
        */
-      .get('/_node/_local', 200, { name: 'node1@127.0.0.1' })
+      .get('/_node/_local', {
+        status: 200,
+        body: { name: 'node1@127.0.0.1' }
+      })
       /**
        * GET /_node/{node-name}/_stats
        * @see https://docs.couchdb.org/en/latest/api/server/common.html#get--_node-node-name-_stats
        */
-      .get('/_node/_local/_stats/couchdb/request_time', 200, {
-        value: {
-          min: 0,
-          max: 0,
-          arithmetic_mean: 0,
-          geometric_mean: 0,
-          harmonic_mean: 0,
-          median: 0,
-          variance: 0,
-          standard_deviation: 0,
-          skewness: 0,
-          kurtosis: 0,
-          percentile: [
-            [
-              50,
-              0
+      .get('/_node/_local/_stats/couchdb/request_time', {
+        status: 200,
+        body: {
+          value: {
+            min: 0,
+            max: 0,
+            arithmetic_mean: 0,
+            geometric_mean: 0,
+            harmonic_mean: 0,
+            median: 0,
+            variance: 0,
+            standard_deviation: 0,
+            skewness: 0,
+            kurtosis: 0,
+            percentile: [
+              [
+                50,
+                0
+              ],
+              [
+                75,
+                0
+              ],
+              [
+                90,
+                0
+              ],
+              [
+                95,
+                0
+              ],
+              [
+                99,
+                0
+              ],
+              [
+                999,
+                0
+              ]
             ],
-            [
-              75,
-              0
+            histogram: [
+              [
+                0,
+                0
+              ]
             ],
-            [
-              90,
-              0
-            ],
-            [
-              95,
-              0
-            ],
-            [
-              99,
-              0
-            ],
-            [
-              999,
-              0
-            ]
-          ],
-          histogram: [
-            [
-              0,
-              0
-            ]
-          ],
-          n: 0
-        },
-        type: 'histogram',
-        desc: 'length of a request inside CouchDB without MochiWeb'
+            n: 0
+          },
+          type: 'histogram',
+          desc: 'length of a request inside CouchDB without MochiWeb'
+        }
       })
       /**
        * GET /_node/{node-name}/_system
        * @sse https://docs.couchdb.org/en/latest/api/server/common.html#get--_node-node-name-_system
        */
-      .get('/_node/_local/_system', 501, 'Not Yet Implemented')
+      .get('/_node/_local/_system', {
+        status: 501,
+        body: 'Not Yet Implemented'
+      })
       /**
        * POST /_node/{node-name}/_restart
        * @see https://docs.couchdb.org/en/latest/api/server/common.html#post--_node-node-name-_restart
        */
-      .post('/_node/:nodename/_restart', 200)
+      .post('/_node/:nodename/_restart', { status: 200 })
       /**
        * POST /_search_analyze
        * @see https://docs.couchdb.org/en/latest/api/server/common.html#post--_search_analyze
        */
-      .post('/_search_analyze', 200, {
-        tokens: ['run']
+      .post('/_search_analyze', {
+        status: 200,
+        body: {
+          tokens: ['run']
+        }
       })
       /**
        * GET /_utils
        * @see https://docs.couchdb.org/en/latest/api/server/common.html#get--_utils
        */
-      .get('/_utils', 301, undefined, {
-        Location: '/_utils/'
+      .get('/_utils', {
+        status: 301,
+        body: undefined,
+        headers: {
+          Location: '/_utils/'
+        }
       })
       /**
        * GET /_utils/
        * @see https://docs.couchdb.org/en/latest/api/server/common.html#get--_utils-
        */
-      .get('/_utils/', 200)
+      .get('/_utils/', { status: 200 })
       /**
        * GET /_up
        * @see https://docs.couchdb.org/en/latest/api/server/common.html#get--_up
        */
-      .get('/_up', 200, { status: 'ok' })
+      .get('/_up', {
+        status: 200,
+        body: { status: 'ok' }
+      })
       /**
        * GET /_uuids
        * @see https://docs.couchdb.org/en/latest/api/server/common.html#get--_uuids
@@ -414,40 +481,52 @@ export default class FakeCouchServer implements IFakeCouch.Server {
        * GET /favicon.ico
        * @see https://docs.couchdb.org/en/latest/api/server/common.html#get--favicon.ico
        */
-      .get('/favicon.ico', 404)
+      .get('/favicon.ico', { status: 404 })
       /**
        * GET /_reshard
        * @see https://docs.couchdb.org/en/latest/api/server/common.html#get--_reshard
        */
-      .get('/_reshard', 200, {
-        completed: 21,
-        failed: 0,
-        running: 3,
-        state: 'running',
-        state_reason: null,
-        stopped: 0,
-        total: 24
+      .get('/_reshard', {
+        status: 200,
+        body: {
+          completed: 21,
+          failed: 0,
+          running: 3,
+          state: 'running',
+          state_reason: null,
+          stopped: 0,
+          total: 24
+        }
       })
       /**
        * GET /_reshard/state
        * @see https://docs.couchdb.org/en/latest/api/server/common.html#get--_reshard-state
        */
-      .get('/_reshard/state', 200, {
-        reason: null,
-        state: 'running'
+      .get('/_reshard/state', {
+        status: 200,
+        body: {
+          reason: null,
+          state: 'running'
+        }
       })
       /**
        * PUT /_reshard/state
        * @see https://docs.couchdb.org/en/latest/api/server/common.html#put--_reshard-state
        */
-      .put('/_reshard/state', 200, { ok: true })
+      .put('/_reshard/state', {
+        status: 200,
+        body: { ok: true }
+      })
       /**
        * @see https://docs.couchdb.org/en/latest/api/server/common.html#get--_reshard-jobs
        */
-      .get('/_reshard/jobs', 200, {
-        jobs: [],
-        offset: 0,
-        total_rows: 0
+      .get('/_reshard/jobs', {
+        status: 200,
+        body: {
+          jobs: [],
+          offset: 0,
+          total_rows: 0
+        }
       })
       /**
        * GET /_reshard/jobs/{jobid}
@@ -487,38 +566,50 @@ export default class FakeCouchServer implements IFakeCouch.Server {
        * POST /_reshard/jobs
        * @see https://docs.couchdb.org/en/latest/api/server/common.html#post--_reshard-jobs
        */
-      .post('/_reshard/jobs', 201, [
-        {
-          id: '001-30d7848a6feeb826d5e3ea5bb7773d672af226fd34fd84a8fb1ca736285df557',
-          node: 'node1@127.0.0.1',
-          ok: true,
-          shard: 'shards/80000000-ffffffff/db3.1554148353'
-        },
-        {
-          id: '001-c2d734360b4cb3ff8b3feaccb2d787bf81ce2e773489eddd985ddd01d9de8e01',
-          node: 'node2@127.0.0.1',
-          ok: true,
-          shard: 'shards/80000000-ffffffff/db3.1554148353'
-        }
-      ])
+      .post('/_reshard/jobs', {
+        status: 201,
+        body: [
+          {
+            id: '001-30d7848a6feeb826d5e3ea5bb7773d672af226fd34fd84a8fb1ca736285df557',
+            node: 'node1@127.0.0.1',
+            ok: true,
+            shard: 'shards/80000000-ffffffff/db3.1554148353'
+          },
+          {
+            id: '001-c2d734360b4cb3ff8b3feaccb2d787bf81ce2e773489eddd985ddd01d9de8e01',
+            node: 'node2@127.0.0.1',
+            ok: true,
+            shard: 'shards/80000000-ffffffff/db3.1554148353'
+          }
+        ]
+      })
       /**
        * DELETE /_reshard/jobs/{jobid}
        * @see https://docs.couchdb.org/en/latest/api/server/common.html#delete--_reshard-jobs-jobid
        */
-      .delete('/_reshard/jobs/:jobid', 200, { ok: true })
+      .delete('/_reshard/jobs/:jobid', {
+        status: 200,
+        body: { ok: true }
+      })
       /**
        * GET /_reshard/jobs/{jobid}/state
        * @see https://docs.couchdb.org/en/latest/api/server/common.html#get--_reshard-jobs-jobid-state
        */
-      .get('/_reshard/jobs/:jobid/state', 200, {
-        reason: null,
-        state: 'running'
+      .get('/_reshard/jobs/:jobid/state', {
+        status: 200,
+        body: {
+          reason: null,
+          state: 'running'
+        }
       })
       /**
        * PUT /_reshard/jobs/{jobid}/state
        * @see https://docs.couchdb.org/en/latest/api/server/common.html#put--_reshard-jobs-jobid-state
        */
-      .put('/_reshard/jobs/:jobid/state', 200, { ok: true });
+      .put('/_reshard/jobs/:jobid/state', {
+        status: 200,
+        body: { ok: true }
+      });
   }
 
   handleDatabaseRequest(req: Request, handler: (db: FakeDatabase) => IFakeCouch.ReplyFunctionReturns): IFakeCouch.ReplyFunctionReturns {
@@ -689,7 +780,7 @@ export default class FakeCouchServer implements IFakeCouch.Server {
           rev: doc._rev
         }));
 
-        this.buildIndexes();
+        db.buildIndexes();
 
         return [
           201,

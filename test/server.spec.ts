@@ -1,5 +1,6 @@
 import supertest from 'supertest';
 import FakeCouchDB from '../lib/FakeCouch';
+import pkg from '../package.json';
 import { v4 as uuid } from 'uuid';
 import { IFakeCouch } from '../typings/IFakeCouch';
 
@@ -8,10 +9,14 @@ const couch: IFakeCouch.Server = new FakeCouchDB({
   logger: false
 });
 
-const api = supertest(`http://localhost:${couch.serverPort}`);
+const api = supertest(couch.serveUrl);
 
-describe('server', () => {
-  beforeAll(() => couch.setup());
+describe('Server', () => {
+  beforeAll(() => {
+    couch.setup();
+    couch.authenticate();
+  });
+
   afterAll(() => couch.reset());
 
   it('GET /', () => {
@@ -25,15 +30,11 @@ describe('server', () => {
         git_sha: 'ff0feea20',
         features: [
           'access-ready',
-          'partitioned',
-          'pluggable-storage-engines',
-          'reshard',
-          'scheduler'
         ],
         vendor: {
-          name: 'Sébastien Demanou'
+          name: pkg.author
         },
-        version: '3.1.0'
+        version: pkg.version
       });
     });
   });

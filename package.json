@@ -7,7 +7,7 @@
     "lint": "eslint lib/**/* typings/**/*",
     "lint:fix": "eslint --fix lib/**/* typings/**/*",
     "build": "rollup -c",
-    "test": "jest --runInBand --coverage"
+    "test": "jest --coverage"
   },
   "repository": {
     "type": "git",
