@@ -661,8 +661,50 @@ export default class FakeCouchServer implements IFakeCouch.Server {
 
   mockDatabase(): void {
     this.scope
+      /**
+       * HEAD /{db}
+       * @see https://docs.couchdb.org/en/latest/api/database/common.html#head--db
+       */
       .head('/:dbname', (req) => this.handleDatabaseRequest(req, (db) => [200]))
+      /**
+       * GET /{db}
+       * @see https://docs.couchdb.org/en/latest/api/database/common.html#get--db
+       */
       .get('/:dbname', (req) => this.handleDatabaseRequest(req, (db) => [200, db.info]))
+      /**
+       * PUT /{db}
+       * @see https://docs.couchdb.org/en/latest/api/database/common.html#put--db
+       */
+      .put('/:dbname', (req) => {
+        if (this.databases.hasOwnProperty(req.params.dbname)) {
+          return [
+            412,
+            {
+              error: 'file_exists',
+              reason: 'The database could not be created, the file already exists.'
+            }
+          ];
+        }
+
+        this.addDatabase(req.params.dbname);
+
+        return [
+          201,
+          { ok: true }
+        ];
+      })
+      .delete('/:dbname', (req) => this.handleDatabaseRequest(req, (db) => {
+        delete this.databases[db.name];
+
+        return [
+          200,
+          { ok: true }
+        ];
+      }))
+      /**
+       * POST /{db}
+       * @see https://docs.couchdb.org/en/latest/api/database/common.html#post--db
+       */
       .post('/:dbname', (req) => this.handleDatabaseRequest(req, (db) => {
         if (req.body._id) {
           if (db.docs.hasOwnProperty(req.body._id)) {
@@ -688,32 +730,6 @@ export default class FakeCouchServer implements IFakeCouch.Server {
           {
             Location: `${this.serveUrl}/${db.name}/${doc._id}`
           }
-        ];
-      }))
-      .put('/:dbname', (req) => {
-        if (this.databases.hasOwnProperty(req.params.dbname)) {
-          return [
-            412,
-            {
-              error: 'file_exists',
-              reason: 'The database could not be created, the file already exists.'
-            }
-          ];
-        }
-
-        this.addDatabase(req.params.dbname);
-
-        return [
-          201,
-          { ok: true }
-        ];
-      })
-      .delete('/:dbname', (req) => this.handleDatabaseRequest(req, (db) => {
-        delete this.databases[db.name];
-
-        return [
-          200,
-          { ok: true }
         ];
       }))
       .get('/:dbname/_all_docs', (req) => this.handleDatabaseRequest(req, (db) => {

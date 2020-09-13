@@ -63,6 +63,7 @@ describe('Authentication', () => {
 
   it('POST /_session', () => {
     return api.get('/_all_dbs').expect(401)
+      .then(() => api.post('/_session').send('name=root').expect(401))
       .then(() => api.post('/_session').send('name=root&password=relax').expect(200, {
         ok: true,
         name: 'root',
