@@ -18,7 +18,50 @@ describe('Authentication', () => {
       .then(() => api.get('/_all_dbs').set({ Authorization: 'Basic cm9vdDpyZWxheA==' }).expect(200));
   });
 
-  it('Cookie Authentication', () => {
+  it('GET, DELETE /_session', () => {
+    return api.get('/_session')
+      .expect(200, {
+        info: {
+          authenticated: 'cookie',
+          authentication_handlers: ['cookie', 'default']
+        },
+        ok: true,
+        userCtx: {
+          name: null,
+          roles: []
+        }
+      })
+      .then(() => api.post('/_session').send('name=arya&password=relax').expect(200))
+      .then(() => {
+        return api.get('/_session').expect(200, {
+          info: {
+            authenticated: 'cookie',
+            authentication_handlers: ['cookie', 'default']
+          },
+          ok: true,
+          userCtx: {
+            name: 'arya',
+            roles: ['_admin']
+          }
+        });
+      })
+      .then(() => api.delete('/_session'))
+      .then(() => {
+        return api.get('/_session').expect(200, {
+          info: {
+            authenticated: 'cookie',
+            authentication_handlers: ['cookie', 'default']
+          },
+          ok: true,
+          userCtx: {
+            name: null,
+            roles: []
+          }
+        });
+      });
+  });
+
+  it('POST /_session', () => {
     return api.get('/_all_dbs').expect(401)
       .then(() => api.post('/_session').send('name=root&password=relax').expect(200, {
         ok: true,

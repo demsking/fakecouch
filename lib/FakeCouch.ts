@@ -34,7 +34,7 @@ export default class FakeCouchServer implements IFakeCouch.Server {
   serverPort: number;
   serveUrl: string;
   databases: Record<string, FakeDatabase> = {};
-  authenticated = false;
+  authenticatedUser: string | null = null;
   server?: Server;
   scope!: IFakeCouch.Scope;
   app: Application;
@@ -55,7 +55,7 @@ export default class FakeCouchServer implements IFakeCouch.Server {
   }
 
   authenticate(): void {
-    this.authenticated = true;
+    this.authenticatedUser = 'root';
   }
 
   addDatabase(dbname: string): FakeDatabase {
@@ -67,7 +67,7 @@ export default class FakeCouchServer implements IFakeCouch.Server {
   }
 
   handleAuth(req: Request, res: Response, next: Function): void {
-    if (req.headers.authorization || this.authenticated) {
+    if (req.headers.authorization || this.authenticatedUser) {
       next();
     } else {
       res.status(401);
@@ -190,11 +190,11 @@ export default class FakeCouchServer implements IFakeCouch.Server {
         bodyParser.urlencoded({ extended: false }),
         (req, res) => {
           if (req.body.name && req.body.password) {
-            this.authenticated = true;
+            this.authenticatedUser = req.body.name;
 
             res.status(200);
             res.set({
-              'Set-Cookie': 'AuthSession=4f2493bfb74e5887effa9480cd7df538_c_eauoCcg2IgB2LabR9bHNxhkM; Version=1; Expires=Wed, 02-Sep-3000 06:33:37 GMT; Max-Age=600; Path=/; HttpOnly'
+              'Set-Cookie': 'AuthSession=cm9vdDo1MjA1NTBDMTqmX2qKt1KDR--GUC80DQ6-Ew_XIw; Version=1; Expires=Wed, 02-Sep-3000 06:33:37 GMT; Max-Age=600; Path=/; HttpOnly'
             });
 
             res.json({
@@ -211,6 +211,36 @@ export default class FakeCouchServer implements IFakeCouch.Server {
           }
         }
       ])
+      /**
+       * GET /_session
+       * @see https://docs.couchdb.org/en/latest/api/server/authn.html#get--_session
+       */
+      .get('/_session', [
+        bodyParser.json(),
+        (req, res) => {
+          res.status(200);
+          res.json({
+            info: {
+              authenticated: 'cookie',
+              authentication_handlers: ['cookie', 'default']
+            },
+            ok: true,
+            userCtx: {
+              name: this.authenticatedUser,
+              roles: this.authenticatedUser ? ['_admin'] : []
+            }
+          });
+        }
+      ])
+      /**
+       * DELETE /_session
+       * @see https://docs.couchdb.org/en/latest/api/server/authn.html#delete--_session
+       */
+      .delete('/_session', () => {
+        this.authenticatedUser = null;
+
+        return [200, { ok: true }];
+      })
       /**
        * GET /_active_tasks
        * @see https://docs.couchdb.org/en/latest/api/server/common.html#get--_active_tasks
