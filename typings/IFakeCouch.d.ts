@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Response } from 'express';
 
 export namespace IFakeCouch {
   export type Options = {
@@ -10,6 +10,7 @@ export namespace IFakeCouch {
   export type Request = express.Request & { query: Record<string, any>, body: Record<string, any> };
   export type ReplyFunctionReturns = [number] | [number, any] | [number, any, Headers];
   export type ReplyFunction = (req: Request) => ReplyFunctionReturns;
+  export type MiddlewareFunction = (req: Request, res: Response) => void;
 
   export type PrimitiveHandler = {
     auth?: boolean;
@@ -18,7 +19,7 @@ export namespace IFakeCouch {
     headers?: Headers;
   };
 
-  export type FunctionHandler = ReplyFunction | [Function, ReplyFunction];
+  export type FunctionHandler = ReplyFunction | [Function, MiddlewareFunction];
 
   export type Handler = PrimitiveHandler | FunctionHandler;
 

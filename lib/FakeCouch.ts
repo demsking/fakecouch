@@ -188,26 +188,27 @@ export default class FakeCouchServer implements IFakeCouch.Server {
        */
       .post('/_session', [
         bodyParser.urlencoded({ extended: false }),
-        (req) => {
+        (req, res) => {
           if (req.body.name && req.body.password) {
             this.authenticated = true;
 
-            return [
-              200,
-              {
-                ok: true,
-                name: req.body.name,
-                roles: [
-                  '_admin'
-                ]
-              },
-              {
-                'Set-Cookie': 'AuthSession=4f2493bfb74e5887effa9480cd7df538_c_eauoCcg2IgB2LabR9bHNxhkM; Version=1; Expires=Wed, 02-Sep-3000 06:33:37 GMT; Max-Age=600; Path=/; HttpOnly'
-              }
-            ];
-          }
+            res.status(200);
+            res.set({
+              'Set-Cookie': 'AuthSession=4f2493bfb74e5887effa9480cd7df538_c_eauoCcg2IgB2LabR9bHNxhkM; Version=1; Expires=Wed, 02-Sep-3000 06:33:37 GMT; Max-Age=600; Path=/; HttpOnly'
+            });
 
-          return [401];
+            res.json({
+              ok: true,
+              name: req.body.name,
+              roles: [
+                '_admin'
+              ]
+            });
+
+            res.end();
+          } else {
+            res.sendStatus(401);
+          }
         }
       ])
       /**
