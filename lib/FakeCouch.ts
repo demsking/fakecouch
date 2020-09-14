@@ -132,8 +132,8 @@ export default class FakeCouchServer implements IFakeCouch.Server {
 
     this.mockServer();
     this.mockDesign();
-    this.mockDocument();
     this.mockDatabase();
+    this.mockDocument();
 
     this.app.use(router);
     this.app.use('*', (req, res) => res.status(501).send(`No implementation for ${req.method} ${req.url}`));
@@ -732,21 +732,14 @@ export default class FakeCouchServer implements IFakeCouch.Server {
           }
         ];
       }))
+      /**
+       * GET /{db}/_all_docs
+       * @see https://docs.couchdb.org/en/latest/api/database/bulk-api.html#get--db-_all_docs
+       */
       .get('/:dbname/_all_docs', (req) => this.handleDatabaseRequest(req, (db) => {
         const docs = Object.values(db.docs);
-
-        return [
-          200,
-          {
-            offset: 0,
-            rows: docs,
-            total_rows: docs.length
-          }
-        ];
-      }))
-      .post('/:dbname/_all_docs', (req) => this.handleDatabaseRequest(req, (db) => {
-        const docs = Object.values(db.docs);
-        const result = req.body.keys.map((key: string) => db.docs[key]).map((doc: Record<string, any>) => ({
+        const items = docs.map((doc) => ({
+          doc,
           value: {
             rev: doc._rev
           },
@@ -756,11 +749,27 @@ export default class FakeCouchServer implements IFakeCouch.Server {
 
         return [
           200,
-          {
-            offset: 0,
-            rows: result,
-            total_rows: docs.length
-          }
+          FakeDatabase.parseDesignViewItems(items, req.query)
+        ];
+      }))
+      /**
+       * POST /{db}/_all_docs
+       * @see https://docs.couchdb.org/en/latest/api/database/bulk-api.html#post--db-_all_docs
+       */
+      .post('/:dbname/_all_docs', (req) => this.handleDatabaseRequest(req, (db) => {
+        const docs = req.body.keys.map((key: string) => db.docs[key]);
+        const items = docs.map((doc: IFakeCouch.DocumentRef) => ({
+          doc,
+          value: {
+            rev: doc._rev
+          },
+          id: doc._id,
+          key: doc._id
+        }));
+
+        return [
+          200,
+          FakeDatabase.parseDesignViewItems(items, req.query)
         ];
       }))
       .get('/:dbname/_design_docs', (req) => this.handleDatabaseRequest(req, (db) => {
@@ -1049,7 +1058,7 @@ export default class FakeCouchServer implements IFakeCouch.Server {
        * POST /{db}/_local_docs
        * @see https://docs.couchdb.org/en/latest/api/local.html#post--db-_local_docs
        */
-      .post('/:dbname/_all_docs', (req) => this.handleDatabaseRequest(req, (db) => {
+      .post('/:dbname/_local_docs', (req) => this.handleDatabaseRequest(req, (db) => {
         const result = req.body.keys.map((key: string) => db.localDocs[key]).map((doc: Record<string, any>) => ({
           value: {
             rev: doc._rev

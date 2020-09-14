@@ -10,7 +10,7 @@ const couch: IFakeCouch.Server = new FakeCouchDB({
 
 const api = supertest(couch.serveUrl);
 
-describe('Authentication', () => {
+describe('Database', () => {
   beforeAll(() => {
     couch.setup();
     couch.authenticate();
@@ -105,64 +105,72 @@ describe('Authentication', () => {
       }));
   });
 
-  it('', () => {
-    return api.get('').expect(200);
-  });
+  it('GET, POST /{db}/_all_docs', () => {
+    const dbname = uuid();
+    const endpoint = `/${dbname}/_all_docs`;
+    const db = couch.addDatabase(dbname);
 
-  it('', () => {
-    return api.get('').expect(200);
-  });
+    db.addDocs([
+      { _id: 'x000', data: 1 },
+      { _id: 'x001', data: 2 },
+      { _id: 'x010', data: 3 },
+      { _id: 'x011', data: 4 },
+      { _id: 'x100', data: 5 },
+    ]);
 
-  it('', () => {
-    return api.get('').expect(200);
-  });
+    const expectedRows = Object.values(db.docs).map((doc) => ({
+      value: {
+        rev: doc._rev
+      },
+      id: doc._id,
+      key: doc._id
+    }));
 
-  it('', () => {
-    return api.get('').expect(200);
-  });
+    const expectedRowsWithDocs = expectedRows.slice(1, 3).map((item) => {
+      return { ...item, doc: db.docs[item.id] };
+    });
 
-  it('', () => {
-    return api.get('').expect(200);
-  });
-
-  it('', () => {
-    return api.get('').expect(200);
-  });
-
-  it('', () => {
-    return api.get('').expect(200);
-  });
-
-  it('', () => {
-    return api.get('').expect(200);
-  });
-
-  it('', () => {
-    return api.get('').expect(200);
-  });
-
-  it('', () => {
-    return api.get('').expect(200);
-  });
-
-  it('', () => {
-    return api.get('').expect(200);
-  });
-
-  it('', () => {
-    return api.get('').expect(200);
-  });
-
-  it('', () => {
-    return api.get('').expect(200);
-  });
-
-  it('', () => {
-    return api.get('').expect(200);
-  });
-
-  it('', () => {
-    return api.get('').expect(200);
+    return api.get(endpoint)
+      .expect(200, {
+        offset: 0,
+        total_rows: expectedRows.length,
+        rows: expectedRows
+      })
+      .then(() => api.get(`${endpoint}?include_docs=true&skip=1&limit=2`)
+      .expect(200, {
+        offset: 1,
+        total_rows: expectedRowsWithDocs.length,
+        rows: expectedRowsWithDocs
+      }))
+      .then(() => api.post(endpoint).send({ keys: ['x001'] })
+      .expect(200, {
+        offset: 0,
+        total_rows: 1,
+        rows: [
+          {
+            id: 'x001',
+            key: 'x001',
+            value: {
+              rev: db.docs.x001._rev
+            }
+          }
+        ]
+      }))
+      .then(() => api.post(`${endpoint}?include_docs=true`).send({ keys: ['x001'] })
+      .expect(200, {
+        offset: 0,
+        total_rows: 1,
+        rows: [
+          {
+            id: 'x001',
+            key: 'x001',
+            value: {
+              rev: db.docs.x001._rev
+            },
+            doc: db.docs.x001
+          }
+        ]
+      }));
   });
 
   it('', () => {

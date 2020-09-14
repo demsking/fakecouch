@@ -302,8 +302,19 @@ export default class FakeDatabase implements IFakeCouch.Database {
     if (this.designs.hasOwnProperty(ddocid)) {
       const views = this.storage[ddocid];
       const view = views[viewname];
-      let items: Row[] = view.items.slice(0) as any;
+      const items: Row[] = view.items.slice(0) as any;
 
+      return FakeDatabase.parseDesignViewItems(items, request, view);
+    }
+
+    return null;
+  }
+
+  static parseDesignViewItems(items: LocalViewItem[], request: FindByViewRequest = {}, view?: LocalView): any {
+    const skip = Number.parseInt(`${request.skip}`, 10) || 0;
+    const limit = Number.parseInt(`${request.limit}`, 10) || 20;
+
+    if (request.hasOwnProperty('descending')) {
       if (request.descending) {
         items.sort((a, b) => {
           if (typeof b.key === 'string') {
@@ -321,57 +332,53 @@ export default class FakeDatabase implements IFakeCouch.Database {
           return a.key - b.key;
         });
       }
+    }
 
-      if (request.skip) {
-        items = items.slice(request.skip);
-      }
+    items = items.slice(skip, skip + limit);
 
-      if (view.reducer) {
-        if (request.group) {
-          const groups: Record<string, any> = {};
+    if (view && view.reducer) {
+      if (request.group) {
+        const groups: Record<string, any> = {};
 
-          switch (view.reducer) {
-            case '_sum':
-              view.items.forEach(({ key, value }) => {
-                if (groups.hasOwnProperty(key)) {
-                  groups[key] += value;
-                } else {
-                  groups[key] = { key, value: value || 0 };
-                }
-              });
-              break;
+        switch (view.reducer) {
+          case '_sum':
+            view.items.forEach(({ key, value }) => {
+              if (groups.hasOwnProperty(key)) {
+                groups[key] += value;
+              } else {
+                groups[key] = { key, value: value || 0 };
+              }
+            });
+            break;
 
-            case '_count':
-              view.items.forEach(({ key }) => {
-                if (groups.hasOwnProperty(key)) {
-                  groups[key]++;
-                } else {
-                  groups[key] = { key, value: 0 };
-                }
-              });
-              break;
-          }
-
-          return { rows: Object.values(groups) };
+          case '_count':
+            view.items.forEach(({ key }) => {
+              if (groups.hasOwnProperty(key)) {
+                groups[key]++;
+              } else {
+                groups[key] = { key, value: 0 };
+              }
+            });
+            break;
         }
 
-        return {
-          rows: [
-            { key: null, value: view.reduce }
-          ]
-        };
+        return { rows: Object.values(groups) };
       }
 
       return {
-        offset: request.skip || 0,
-        total_rows: items.length,
-        rows: request.include_docs
-          ? items
-          : items.map(({ id, key, value }) => ({ id, key, value }))
+        rows: [
+          { key: null, value: view.reduce }
+        ]
       };
     }
 
-    return null;
+    return {
+      offset: skip,
+      total_rows: items.length,
+      rows: request.include_docs
+        ? items
+        : items.map(({ id, key, value }) => ({ id, key, value }))
+    };
   }
 
   buildIndexes(): void {
