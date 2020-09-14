@@ -15,9 +15,9 @@
   },
   "keywords": [
     "fake",
-    "couch",
-    "db",
-    "couchdb"
+    "couchdb",
+    "server",
+    "testing"
   ],
   "author": "Sébastien Demanou",
   "license": "MIT",
