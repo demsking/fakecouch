@@ -510,13 +510,14 @@ describe('Database', () => {
       ]
     };
 
-    const queryWithSortAsc = {
+    const queryWithSortAscAndFields = {
       selector: {
         type: 'posts'
       },
       sort: [
         { 'data.s': 'asc' }
-      ]
+      ],
+      fields: ['_id']
     };
 
     const queryWithSortDesc = {
@@ -713,13 +714,13 @@ describe('Database', () => {
           db.docs.x000,
         ]
       }))
-      .then(() => api.post(endpoint).send(queryWithSortAsc).expect(200, {
+      .then(() => api.post(endpoint).send(queryWithSortAscAndFields).expect(200, {
         docs: [
-          db.docs.x100,
-          db.docs.x001,
-          db.docs.x101,
-          db.docs.x110,
-          db.docs.x000,
+          { _id: db.docs.x100._id },
+          { _id: db.docs.x001._id },
+          { _id: db.docs.x101._id },
+          { _id: db.docs.x110._id },
+          { _id: db.docs.x000._id },
         ]
       }))
       .then(() => api.post(endpoint).send(queryWithSortDesc).expect(200, {

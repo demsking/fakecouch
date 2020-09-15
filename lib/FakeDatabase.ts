@@ -509,16 +509,6 @@ export default class FakeDatabase implements IFakeCouch.Database {
       }))
       .slice(skip, skip + limit);
 
-    if (fields.length) {
-      result.docs = result.docs.map((item) => {
-        const outItem = {} as any;
-
-        fields.forEach((path) => dotProp.set(outItem, path, dotProp.get(item, path)));
-
-        return outItem;
-      });
-    }
-
     if (sort.length) {
       sort.forEach((sortItem) => {
         if (typeof sortItem === 'string') {
@@ -548,6 +538,16 @@ export default class FakeDatabase implements IFakeCouch.Database {
 
           break;
         }
+      });
+    }
+
+    if (fields.length) {
+      result.docs = result.docs.map((item) => {
+        const outItem = {} as any;
+
+        fields.forEach((path) => dotProp.set(outItem, path, dotProp.get(item, path)));
+
+        return outItem;
       });
     }
 
