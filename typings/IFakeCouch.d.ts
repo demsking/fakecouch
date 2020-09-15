@@ -40,6 +40,16 @@ export namespace IFakeCouch {
     _rev: string;
   }
 
+  export type DesignDocument = {
+    _id: string;
+    views: {
+      [viewname: string]: {
+        map: string;
+        reduce?: string;
+      };
+    };
+  };
+
   export interface Database {
     readonly name: string;
     readonly docs: Record<string, DocumentRef>;
@@ -48,7 +58,7 @@ export namespace IFakeCouch {
 
     addDoc(doc: Document, docid?: string): DocumentRef;
     addDocs(docs: Document[]): void;
-    addDesign(ddoc: Required<Document>): DocumentRef;
+    addDesign(ddoc: IFakeCouch.DesignDocument): DocumentRef;
     hasDesign(ddocid: string): boolean;
     deleteDesign(ddocid: string): void;
   }

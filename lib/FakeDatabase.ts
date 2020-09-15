@@ -232,37 +232,39 @@ export default class FakeDatabase implements IFakeCouch.Database {
     this.buildIndexes();
   }
 
-  addDesign(ddoc: Required<IFakeCouch.Document>): IFakeCouch.DocumentRef {
-    ddoc._rev = `1-${uuid()}`;
+  addDesign(ddoc: IFakeCouch.DesignDocument): IFakeCouch.DocumentRef {
+    const doc = ddoc as Required<IFakeCouch.Document>;
 
-    this.designs[ddoc._id] = ddoc as any;
-    this.storage[ddoc._id] = {};
+    doc._rev = `1-${uuid()}`;
 
-    const views = this.storage[ddoc._id];
+    this.designs[doc._id] = doc as any;
+    this.storage[doc._id] = {};
 
-    for (const name in ddoc.views) {
+    const views = this.storage[doc._id];
+
+    for (const name in doc.views) {
       views[name] = {
         items: [],
-        mapper: eval(ddoc.views[name].map),
+        mapper: eval(doc.views[name].map),
         reduce: 0,
-        reducer: ddoc.views[name].reduce
+        reducer: doc.views[name].reduce
       };
     }
 
     function resetViews() {
-      for (const name in ddoc.views) {
+      for (const name in doc.views) {
         views[name].items.splice(0);
 
         views[name].reduce = 0;
       }
     }
 
-    this.indexes[ddoc._id] = () => {
+    this.indexes[doc._id] = () => {
       resetViews();
 
       const rows = Object.values(this.docs);
 
-      for (const name in ddoc.views) {
+      for (const name in doc.views) {
         const view = views[name];
 
         rows.forEach((doc) => {
@@ -285,9 +287,9 @@ export default class FakeDatabase implements IFakeCouch.Database {
       }
     };
 
-    this.indexes[ddoc._id]();
+    this.indexes[doc._id]();
 
-    return ddoc as any;
+    return doc as any;
   }
 
   hasDesign(ddocid: string): boolean {

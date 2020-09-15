@@ -173,9 +173,95 @@ describe('Database', () => {
       }));
   });
 
-  it('', () => {
-    return api.get('').expect(200);
+  it('GET /{db}/_design_docs', () => {
+    const dbname = uuid();
+    const endpoint = `/${dbname}/_design_docs`;
+    const db = couch.addDatabase(dbname);
+    const ddoc = db.addDesign({
+      _id: '_design/posts',
+      views: {
+        items: {
+          map: '(doc) => {if(doc.type === "posts") emit(doc._id, doc._rev)}'
+        }
+      }
+    });
+
+    return api.get(endpoint).expect(200, {
+      offset: 0,
+      total_rows: 1,
+      rows: [
+        {
+          id: ddoc._id,
+          key: ddoc._id,
+          value: {
+            rev: ddoc._rev
+          }
+        }
+      ],
+    });
   });
+
+  it('POST /{db}/_design_docs', () => {
+    const dbname = uuid();
+    const endpoint = `/${dbname}/_design_docs`;
+    const db = couch.addDatabase(dbname);
+    const ddocposts = db.addDesign({
+      _id: '_design/posts',
+      views: {
+        items: {
+          map: '(doc) => {if(doc.type === "posts") emit(doc._id, doc._rev)}'
+        }
+      }
+    });
+    const ddocpages = db.addDesign({
+      _id: '_design/pages',
+      views: {
+        items: {
+          map: '(doc) => {if(doc.type === "pages") emit(doc._id, doc._rev)}'
+        }
+      }
+    });
+
+    return api.post(endpoint).send({ keys: [ddocpages._id] }).expect(200, {
+      offset: 0,
+      total_rows: 1,
+      rows: [
+        {
+          id: ddocpages._id,
+          key: ddocpages._id,
+          value: {
+            rev: ddocpages._rev
+          }
+        }
+      ],
+    });
+  });
+
+  // it('GET, POST /{db}/_design_docs', () => {
+  //   const dbname = uuid();
+  //   const endpoint = `/${dbname}/_design_docs`;
+  //   const db = couch.addDatabase(dbname);
+
+  //   db.addDocs([
+  //     { _id: 'x000', type: 'posts', data: 1 },
+  //     { _id: 'x001', type: 'posts', data: 2 },
+  //     { _id: 'x010', type: 'pages', data: 3 },
+  //     { _id: 'x011', type: 'pages', data: 4 },
+  //     { _id: 'x100', type: 'posts', data: 5 },
+  //   ]);
+
+  //   const ddoc = db.addDesign({
+  //     _id: '_design/posts',
+  //     views: {
+  //       items: {
+  //         map: '(doc) => {if(doc.type === "posts") emit(doc._id, doc._rev)}'
+  //       }
+  //     }
+  //   });
+
+  //   return api.get(endpoint)
+  //     .expect(200, { offset: 0, rows: [], total_rows: 0 });
+  // });
 
   it('', () => {
     return api.get('').expect(200);

@@ -772,21 +772,14 @@ export default class FakeCouchServer implements IFakeCouch.Server {
           FakeDatabase.parseDesignViewItems(items, req.query)
         ];
       }))
+      /**
+       * GET /{db}/_design_docs
+       * @see https://docs.couchdb.org/en/latest/api/database/bulk-api.html#get--db-_design_docs
+       */
       .get('/:dbname/_design_docs', (req) => this.handleDatabaseRequest(req, (db) => {
         const docs = Object.values(db.designs);
-
-        return [
-          200,
-          {
-            offset: 0,
-            rows: docs,
-            total_rows: docs.length
-          }
-        ];
-      }))
-      .post('/:dbname/_design_docs', (req) => this.handleDatabaseRequest(req, (db) => {
-        const docs = Object.values(db.designs);
-        const result = req.body.keys.map((key: string) => db.designs[key]).map((doc: Record<string, any>) => ({
+        const items = docs.map((doc: IFakeCouch.DocumentRef) => ({
+          doc,
           value: {
             rev: doc._rev
           },
@@ -796,11 +789,27 @@ export default class FakeCouchServer implements IFakeCouch.Server {
 
         return [
           200,
-          {
-            offset: 0,
-            rows: result,
-            total_rows: docs.length
-          }
+          FakeDatabase.parseDesignViewItems(items, req.query)
+        ];
+      }))
+      /**
+       * POST /{db}/_design_docs
+       * @see https://docs.couchdb.org/en/latest/api/database/bulk-api.html#post--db-_design_docs
+       */
+      .post('/:dbname/_design_docs', (req) => this.handleDatabaseRequest(req, (db) => {
+        const docs = req.body.keys.map((key: string) => db.designs[key]);
+        const items = docs.map((doc: IFakeCouch.DocumentRef) => ({
+          doc,
+          value: {
+            rev: doc._rev
+          },
+          id: doc._id,
+          key: doc._id
+        }));
+
+        return [
+          200,
+          FakeDatabase.parseDesignViewItems(items, req.query)
         ];
       }))
       .post('/:dbname/_all_docs/queries', (req) => this.handleDatabaseRequest(req, (db) => [501, 'Not Yet Implemented']))
