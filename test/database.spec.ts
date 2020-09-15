@@ -237,6 +237,14 @@ describe('Database', () => {
     });
   });
 
+  it('POST /{db}/_all_docs/queries', () => {
+    const dbname = uuid();
+
+    couch.addDatabase(dbname);
+
+    return api.post(`/${dbname}/_all_docs/queries`).expect(501, 'Not Yet Implemented');
+  });
+
   // it('GET, POST /{db}/_design_docs', () => {
   //   const dbname = uuid();
   //   const endpoint = `/${dbname}/_design_docs`;

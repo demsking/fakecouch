@@ -812,6 +812,10 @@ export default class FakeCouchServer implements IFakeCouch.Server {
           FakeDatabase.parseDesignViewItems(items, req.query)
         ];
       }))
+      /**
+       * POST /{db}/_all_docs/queries
+       * @see https://docs.couchdb.org/en/latest/api/database/bulk-api.html#post--db-_all_docs-queries
+       */
       .post('/:dbname/_all_docs/queries', (req) => this.handleDatabaseRequest(req, (db) => [501, 'Not Yet Implemented']))
       .post('/:dbname/_bulk_get', (req) => this.handleDatabaseRequest(req, (db) => {
         const result = req.body.docs.map(({ id }: any) => db.docs[id]).map((doc: Record<string, any>) => ({
