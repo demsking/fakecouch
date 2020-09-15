@@ -411,24 +411,10 @@ export default class FakeDatabase implements IFakeCouch.Database {
     delete this.indexes[ddocid];
   }
 
-  find(request: QueryRequest): QueryResponse {
-    const {
-      selector,
-      limit = 25,
-      skip = 0,
-      fields = [],
-      sort = [],
-      execution_stats = false
-    } = request;
-
-    const startTime = process.hrtime();
-    const items = Object.values(this.docs);
+  _find(selector: Selector, items = Object.values(this.docs)): IFakeCouch.DocumentRef[] {
     const paths = Object.keys(selector);
-    const result: QueryResponse = {
-      docs: []
-    };
 
-    result.docs = items.filter((item) => paths.every((path) => {
+    return items.filter((item) => paths.every((path) => {
       const fieldValue: any = dotProp.get(item, path);
       const selectorValue = selector[path];
 
@@ -506,6 +492,59 @@ export default class FakeDatabase implements IFakeCouch.Database {
         throw new Error('Invalid operator');
       });
     }));
+  }
+
+  find(request: QueryRequest): QueryResponse {
+    const {
+      selector,
+      limit = 25,
+      skip = 0,
+      fields = [],
+      sort = [],
+      execution_stats = false
+    } = request;
+
+    const startTime = process.hrtime();
+    const items = Object.values(this.docs);
+    const result: QueryResponse = {
+      docs: []
+    };
+
+    Object.keys(selector).forEach((key) => {
+      const selectorValue = selector[key];
+
+      switch (key) {
+        case '$and':
+          if (!Array.isArray(selectorValue)) {
+            throw Error('Invalid $and value');
+          }
+
+          result.docs = items;
+
+          selectorValue.forEach((itemSelector) => {
+            result.docs = this._find(itemSelector, result.docs);
+          });
+          break;
+
+        case '$or':
+          if (!Array.isArray(selectorValue)) {
+            throw Error('Invalid $or value');
+          }
+
+          selectorValue.forEach((itemSelector) => {
+            this._find(itemSelector, items).forEach((item) => {
+              if (!result.docs.includes(item)) {
+                result.docs.push(item);
+              }
+            });
+          });
+          break;
+
+        default:
+          result.docs = items;
+          result.docs = this._find({ [key]: selectorValue }, result.docs);
+      }
+    });
 
     if (sort.length) {
       sort.forEach((sortItem) => {

@@ -529,6 +529,46 @@ describe('Database', () => {
       ]
     };
 
+    const queryWithInvalidAndValue = {
+      selector: {
+        $and: {}
+      }
+    };
+
+    const queryWithAnd = {
+      selector: {
+        $and: [
+          {
+            type: 'posts'
+          },
+          {
+            'data.desc': null
+          }
+        ]
+      }
+    };
+
+    const queryWithInvalidOrValue = {
+      selector: {
+        $or: {}
+      }
+    };
+
+    const queryWithOr = {
+      selector: {
+        $or: [
+          {
+            'data.title': 'Post 1'
+          },
+          {
+            'data.title': {
+              $regex: '(Post|Page) 1'
+            }
+          }
+        ]
+      }
+    };
+
     db.addDocs([
       { _id: 'x000', type: 'posts', data: { title: 'Post 1', s: 5, desc: 'Lorem 1', n: 1, enabled: true } },
       { _id: 'x001', type: 'posts', data: { title: 'Post 2', s: 2, desc: 'Lorem 2', n: 2, enabled: false } },
@@ -730,6 +770,19 @@ describe('Database', () => {
           db.docs.x101,
           db.docs.x001,
           db.docs.x100,
+        ]
+      }))
+      .then(() => api.post(endpoint).send(queryWithInvalidAndValue).expect(400))
+      .then(() => api.post(endpoint).send(queryWithAnd).expect(200, {
+        docs: [
+          db.docs.x110,
+        ]
+      }))
+      .then(() => api.post(endpoint).send(queryWithInvalidOrValue).expect(400))
+      .then(() => api.post(endpoint).send(queryWithOr).expect(200, {
+        docs: [
+          db.docs.x000,
+          db.docs.x010,
         ]
       }));
   });
