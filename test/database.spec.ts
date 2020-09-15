@@ -311,281 +311,8 @@ describe('Database', () => {
     });
   });
 
-  it('POST /{db}/_find', () => {
-    const dbname = uuid();
-    const endpoint = `/${dbname}/_find`;
-    const db = couch.addDatabase(dbname);
-    const query = {
-      skip: 1,
-      limit: 2,
-      selector: {
-        type: 'posts',
-        'data.title': {
-          $regex: 'Post (1|3|4)'
-        }
-      }
-    };
-
-    const queryWithFields = {
-      ...query,
-      fields: [
-        'type',
-        'data.n'
-      ],
-      execution_stats: true
-    };
-
-    const queryWithGtLt = {
-      selector: {
-        'data.n': {
-          $gt: 1,
-          $lt: 3,
-        }
-      }
-    };
-
-    const queryWithGteLte = {
-      selector: {
-        'data.n': {
-          $gte: 2,
-          $lte: 3,
-        }
-      }
-    };
-
-    const queryWithNull = {
-      selector: {
-        'data.desc': null
-      }
-    };
-
-    const queryWithEq = {
-      selector: {
-        type: {
-          $eq: 'pages'
-        }
-      }
-    };
-
-    const queryWithNe = {
-      selector: {
-        type: {
-          $ne: 'posts'
-        }
-      }
-    };
-
-    const queryWithArray = {
-      selector: {
-        'data.list': [1]
-      }
-    };
-
-    const queryWithIn = {
-      selector: {
-        'data.list': {
-          $in: [2]
-        }
-      }
-    };
-
-    const queryWithNin = {
-      selector: {
-        'data.list': {
-          $nin: [2]
-        }
-      }
-    };
-
-    const queryWithSize = {
-      selector: {
-        'data.list': {
-          $size: 2
-        }
-      }
-    };
-
-    const queryWithExistsTrue = {
-      selector: {
-        'data.slug': {
-          $exists: true
-        }
-      }
-    };
-
-    const queryWithExistsFalse = {
-      selector: {
-        'data.slug': {
-          $exists: false
-        }
-      }
-    };
-
-    const queryWithTypeString = {
-      selector: {
-        'data.desc': {
-          $type: 'string'
-        }
-      }
-    };
-
-    const queryWithTypeBoolean = {
-      selector: {
-        'data.enabled': {
-          $type: 'boolean'
-        }
-      }
-    };
-
-    const queryWithTypeNull = {
-      selector: {
-        'data.desc': {
-          $type: 'null'
-        }
-      }
-    };
-
-    const queryWithTypeNumber = {
-      selector: {
-        'data.n': {
-          $type: 'number'
-        }
-      }
-    };
-
-    const queryWithTypeArray = {
-      selector: {
-        'data.list': {
-          $type: 'array'
-        }
-      }
-    };
-
-    const queryWithTypeObject = {
-      selector: {
-        data: {
-          $type: 'object'
-        }
-      }
-    };
-
-    const queryWithMod = {
-      selector: {
-        'data.n': {
-          $mod: [2, 0]
-        }
-      }
-    };
-
-    const queryWithModInvalidDivisor = {
-      selector: {
-        'data.n': {
-          $mod: ['2', 0]
-        }
-      }
-    };
-
-    const queryWithModInvalidRemainder = {
-      selector: {
-        'data.n': {
-          $mod: [2, '0']
-        }
-      }
-    };
-
-    const queryWithModInvalidOperator = {
-      selector: {
-        'data.n': {
-          $invalidOperator: 'x'
-        }
-      }
-    };
-
-    const queryWithSortDefaultAsc = {
-      selector: {
-        type: 'posts'
-      },
-      sort: [
-        'data.s'
-      ]
-    };
-
-    const queryWithSortAscAndFields = {
-      selector: {
-        type: 'posts'
-      },
-      sort: [
-        { 'data.s': 'asc' }
-      ],
-      fields: ['_id']
-    };
-
-    const queryWithSortDesc = {
-      selector: {
-        type: 'posts'
-      },
-      sort: [
-        { 'data.s': 'desc' }
-      ]
-    };
-
-    const queryWithInvalidAndValue = {
-      selector: {
-        $and: {}
-      }
-    };
-
-    const queryWithAnd = {
-      selector: {
-        $and: [
-          {
-            type: 'posts'
-          },
-          {
-            'data.desc': null
-          }
-        ]
-      }
-    };
-
-    const queryWithInvalidOrValue = {
-      selector: {
-        $or: {}
-      }
-    };
-
-    const queryWithOr = {
-      selector: {
-        $or: [
-          {
-            'data.title': 'Post 1'
-          },
-          {
-            'data.title': {
-              $regex: '(Post|Page) 1'
-            }
-          }
-        ]
-      }
-    };
-
-    const queryWithInvalidNotValue = {
-      selector: {
-        $not: []
-      }
-    };
-
-    const queryWithNot = {
-      selector: {
-        $not: {
-          'data.desc': {
-            $ne: null
-          }
-        }
-      }
-    };
-
-    db.addDocs([
+  describe('POST /{db}/_find', () => {
+    const docs = [
       { _id: 'x000', type: 'posts', data: { title: 'Post 1', s: 5, desc: 'Lorem 1', n: 1, enabled: true } },
       { _id: 'x001', type: 'posts', data: { title: 'Post 2', s: 2, desc: 'Lorem 2', n: 2, enabled: false } },
       { _id: 'x010', type: 'pages', data: { title: 'Page 1', s: 2, desc: 'Lorem 1', n: 1, slug: 'page1' } },
@@ -593,17 +320,77 @@ describe('Database', () => {
       { _id: 'x100', type: 'posts', data: { title: 'Post 3', s: 1, desc: 'Lorem 3', n: 3 } },
       { _id: 'x101', type: 'posts', data: { title: 'Post 4', s: 3, desc: 'Lorem 4', n: 4, list: [1, 2] } },
       { _id: 'x110', type: 'posts', data: { title: 'Post 5', s: 4, desc: null, n: 5, list: [1] } },
-    ]);
+    ];
 
-    return api.post(endpoint).send({ limit: 2 }).expect(400)
-      .then(() => api.post(endpoint).send(query).expect(200, {
+    it('scalar', () => {
+      const dbname = uuid();
+      const endpoint = `/${dbname}/_find`;
+      const db = couch.addDatabase(dbname);
+      const query = {
+        skip: 1,
+        limit: 2,
+        selector: {
+          type: 'posts',
+        }
+      };
+
+      db.addDocs([ ...docs ]);
+
+      return api.post(endpoint).send({ limit: 2 }).expect(400)
+        .then(() => api.post(endpoint).send(query).expect(200, {
+          docs: [
+            db.docs.x001,
+            db.docs.x100,
+          ]
+        }));
+    });
+
+    it('$regex', () => {
+      const dbname = uuid();
+      const endpoint = `/${dbname}/_find`;
+      const db = couch.addDatabase(dbname);
+      const query = {
+        skip: 1,
+        limit: 2,
+        selector: {
+          'data.title': {
+            $regex: 'Post (1|3|5)'
+          }
+        }
+      };
+
+      db.addDocs([ ...docs ]);
+
+      return api.post(endpoint).send(query).expect(200, {
         docs: [
           db.docs.x100,
-          db.docs.x101,
+          db.docs.x110,
         ]
-      }))
-      .then(() => api.post(endpoint).send(queryWithFields).expect(200))
-      .then(({ body }) => {
+      });
+    });
+
+    it('fields & execution_stats', () => {
+      const dbname = uuid();
+      const endpoint = `/${dbname}/_find`;
+      const db = couch.addDatabase(dbname);
+      const query = {
+        skip: 1,
+        limit: 2,
+        selector: {
+          'data.title': {
+            $regex: 'Post (1|3|4)'
+          }
+        },
+        fields: [
+          'type',
+          'data.n'
+        ],
+        execution_stats: true
+      };
+
+      db.addDocs([ ...docs ]);
+
+      return api.post(endpoint).send(query).expect(200).then(({ body }) => {
         expect(typeof body.execution_stats.execution_time_ms).toBe('number');
 
         body.execution_stats.execution_time_ms = -1;
@@ -631,65 +418,239 @@ describe('Database', () => {
             execution_time_ms: -1
           }
         });
-      })
-      .then(() => api.post(endpoint).send(queryWithGtLt).expect(200, {
+      });
+    });
+
+    it('$gt & $lt', () => {
+      const dbname = uuid();
+      const endpoint = `/${dbname}/_find`;
+      const db = couch.addDatabase(dbname);
+      const query = {
+        selector: {
+          'data.n': {
+            $gt: 1,
+            $lt: 3,
+          }
+        }
+      };
+
+      db.addDocs([ ...docs ]);
+
+      return api.post(endpoint).send(query).expect(200, {
         docs: [
           db.docs.x001,
           db.docs.x011,
         ]
-      }))
-      .then(() => api.post(endpoint).send(queryWithGteLte).expect(200, {
+      });
+    });
+
+    it('$gte & $lte', () => {
+      const dbname = uuid();
+      const endpoint = `/${dbname}/_find`;
+      const db = couch.addDatabase(dbname);
+      const query = {
+        selector: {
+          'data.n': {
+            $gte: 2,
+            $lte: 3,
+          }
+        }
+      };
+
+      db.addDocs([ ...docs ]);
+
+      return api.post(endpoint).send(query).expect(200, {
         docs: [
           db.docs.x001,
           db.docs.x011,
           db.docs.x100,
         ]
-      }))
-      .then(() => api.post(endpoint).send(queryWithNull).expect(200, {
+      });
+    });
+
+    it('null', () => {
+      const dbname = uuid();
+      const endpoint = `/${dbname}/_find`;
+      const db = couch.addDatabase(dbname);
+      const query = {
+        selector: {
+          'data.desc': null
+        }
+      };
+
+      db.addDocs([ ...docs ]);
+
+      return api.post(endpoint).send(query).expect(200, {
         docs: [
           db.docs.x011,
           db.docs.x110,
         ]
-      }))
-      .then(() => api.post(endpoint).send(queryWithEq).expect(200, {
+      });
+    });
+
+    it('$eq', () => {
+      const dbname = uuid();
+      const endpoint = `/${dbname}/_find`;
+      const db = couch.addDatabase(dbname);
+      const query = {
+        selector: {
+          type: {
+            $eq: 'pages'
+          }
+        }
+      };
+
+      db.addDocs([ ...docs ]);
+
+      return api.post(endpoint).send(query).expect(200, {
         docs: [
           db.docs.x010,
           db.docs.x011,
         ]
-      }))
-      .then(() => api.post(endpoint).send(queryWithNe).expect(200, {
+      });
+    });
+
+    it('$ne', () => {
+      const dbname = uuid();
+      const endpoint = `/${dbname}/_find`;
+      const db = couch.addDatabase(dbname);
+      const query = {
+        selector: {
+          type: {
+            $ne: 'posts'
+          }
+        }
+      };
+
+      db.addDocs([ ...docs ]);
+
+      return api.post(endpoint).send(query).expect(200, {
         docs: [
           db.docs.x010,
           db.docs.x011,
         ]
-      }))
-      .then(() => api.post(endpoint).send(queryWithArray).expect(200, {
+      });
+    });
+
+    it('array', () => {
+      const dbname = uuid();
+      const endpoint = `/${dbname}/_find`;
+      const db = couch.addDatabase(dbname);
+      const query = {
+        selector: {
+          'data.list': [1]
+        }
+      };
+
+      db.addDocs([ ...docs ]);
+
+      return api.post(endpoint).send(query).expect(200, {
         docs: [
           db.docs.x110,
         ]
-      }))
-      .then(() => api.post(endpoint).send(queryWithIn).expect(200, {
+      });
+    });
+
+    it('$in', () => {
+      const dbname = uuid();
+      const endpoint = `/${dbname}/_find`;
+      const db = couch.addDatabase(dbname);
+      const query = {
+        selector: {
+          'data.list': {
+            $in: [2]
+          }
+        }
+      };
+
+      db.addDocs([ ...docs ]);
+
+      return api.post(endpoint).send(query).expect(200, {
         docs: [
           db.docs.x101,
         ]
-      }))
-      .then(() => api.post(endpoint).send(queryWithNin).expect(200, {
+      });
+    });
+
+    it('$nin', () => {
+      const dbname = uuid();
+      const endpoint = `/${dbname}/_find`;
+      const db = couch.addDatabase(dbname);
+      const query = {
+        selector: {
+          'data.list': {
+            $nin: [2]
+          }
+        }
+      };
+
+      db.addDocs([ ...docs ]);
+
+      return api.post(endpoint).send(query).expect(200, {
         docs: [
           db.docs.x110,
         ]
-      }))
-      .then(() => api.post(endpoint).send(queryWithSize).expect(200, {
+      });
+    });
+
+    it('$size', () => {
+      const dbname = uuid();
+      const endpoint = `/${dbname}/_find`;
+      const db = couch.addDatabase(dbname);
+      const query = {
+        selector: {
+          'data.list': {
+            $size: 2
+          }
+        }
+      };
+
+      db.addDocs([ ...docs ]);
+
+      return api.post(endpoint).send(query).expect(200, {
         docs: [
           db.docs.x101,
         ]
-      }))
-      .then(() => api.post(endpoint).send(queryWithExistsTrue).expect(200, {
+      });
+    });
+
+    it('$exists = true', () => {
+      const dbname = uuid();
+      const endpoint = `/${dbname}/_find`;
+      const db = couch.addDatabase(dbname);
+      const query = {
+        selector: {
+          'data.slug': {
+            $exists: true
+          }
+        }
+      };
+
+      db.addDocs([ ...docs ]);
+
+      return api.post(endpoint).send(query).expect(200, {
         docs: [
           db.docs.x010,
           db.docs.x011,
         ]
-      }))
-      .then(() => api.post(endpoint).send(queryWithExistsFalse).expect(200, {
+      });
+    });
+
+    it('$exists = false', () => {
+      const dbname = uuid();
+      const endpoint = `/${dbname}/_find`;
+      const db = couch.addDatabase(dbname);
+      const query = {
+        selector: {
+          'data.slug': {
+            $exists: false
+          }
+        }
+      };
+
+      db.addDocs([ ...docs ]);
+
+      return api.post(endpoint).send(query).expect(200, {
         docs: [
           db.docs.x000,
           db.docs.x001,
@@ -697,8 +658,24 @@ describe('Database', () => {
           db.docs.x101,
           db.docs.x110,
         ]
-      }))
-      .then(() => api.post(endpoint).send(queryWithTypeString).expect(200, {
+      });
+    });
+
+    it('$type string', () => {
+      const dbname = uuid();
+      const endpoint = `/${dbname}/_find`;
+      const db = couch.addDatabase(dbname);
+      const query = {
+        selector: {
+          'data.desc': {
+            $type: 'string'
+          }
+        }
+      };
+
+      db.addDocs([ ...docs ]);
+
+      return api.post(endpoint).send(query).expect(200, {
         docs: [
           db.docs.x000,
           db.docs.x001,
@@ -706,20 +683,68 @@ describe('Database', () => {
           db.docs.x100,
           db.docs.x101,
         ]
-      }))
-      .then(() => api.post(endpoint).send(queryWithTypeBoolean).expect(200, {
+      });
+    });
+
+    it('$type boolean', () => {
+      const dbname = uuid();
+      const endpoint = `/${dbname}/_find`;
+      const db = couch.addDatabase(dbname);
+      const query = {
+        selector: {
+          'data.enabled': {
+            $type: 'boolean'
+          }
+        }
+      };
+
+      db.addDocs([ ...docs ]);
+
+      return api.post(endpoint).send(query).expect(200, {
         docs: [
           db.docs.x000,
           db.docs.x001,
         ]
-      }))
-      .then(() => api.post(endpoint).send(queryWithTypeNull).expect(200, {
+      });
+    });
+
+    it('$type null', () => {
+      const dbname = uuid();
+      const endpoint = `/${dbname}/_find`;
+      const db = couch.addDatabase(dbname);
+      const query = {
+        selector: {
+          'data.desc': {
+            $type: 'null'
+          }
+        }
+      };
+
+      db.addDocs([ ...docs ]);
+
+      return api.post(endpoint).send(query).expect(200, {
         docs: [
           db.docs.x011,
           db.docs.x110,
         ]
-      }))
-      .then(() => api.post(endpoint).send(queryWithTypeNumber).expect(200, {
+      });
+    });
+
+    it('$type number', () => {
+      const dbname = uuid();
+      const endpoint = `/${dbname}/_find`;
+      const db = couch.addDatabase(dbname);
+      const query = {
+        selector: {
+          'data.n': {
+            $type: 'number'
+          }
+        }
+      };
+
+      db.addDocs([ ...docs ]);
+
+      return api.post(endpoint).send(query).expect(200, {
         docs: [
           db.docs.x000,
           db.docs.x001,
@@ -729,14 +754,46 @@ describe('Database', () => {
           db.docs.x101,
           db.docs.x110,
         ]
-      }))
-      .then(() => api.post(endpoint).send(queryWithTypeArray).expect(200, {
+      });
+    });
+
+    it('$type array', () => {
+      const dbname = uuid();
+      const endpoint = `/${dbname}/_find`;
+      const db = couch.addDatabase(dbname);
+      const query = {
+        selector: {
+          'data.list': {
+            $type: 'array'
+          }
+        }
+      };
+
+      db.addDocs([ ...docs ]);
+
+      return api.post(endpoint).send(query).expect(200, {
         docs: [
           db.docs.x101,
           db.docs.x110,
         ]
-      }))
-      .then(() => api.post(endpoint).send(queryWithTypeObject).expect(200, {
+      });
+    });
+
+    it('$type object', () => {
+      const dbname = uuid();
+      const endpoint = `/${dbname}/_find`;
+      const db = couch.addDatabase(dbname);
+      const query = {
+        selector: {
+          data: {
+            $type: 'object'
+          }
+        }
+      };
+
+      db.addDocs([ ...docs ]);
+
+      return api.post(endpoint).send(query).expect(200, {
         docs: [
           db.docs.x000,
           db.docs.x001,
@@ -746,22 +803,103 @@ describe('Database', () => {
           db.docs.x101,
           db.docs.x110,
         ]
-      }))
-      .then(() => api.post(endpoint).send(queryWithMod).expect(200, {
+      });
+    });
+
+    it('$mod', () => {
+      const dbname = uuid();
+      const endpoint = `/${dbname}/_find`;
+      const db = couch.addDatabase(dbname);
+      const query = {
+        selector: {
+          'data.n': {
+            $mod: [2, 0]
+          }
+        }
+      };
+
+      db.addDocs([ ...docs ]);
+
+      return api.post(endpoint).send(query).expect(200, {
         docs: [
           db.docs.x001,
           db.docs.x011,
           db.docs.x101,
         ]
-      }))
-      .then(() => api.post(endpoint).send(queryWithModInvalidDivisor).expect(200, {
+      });
+    });
+
+    it('$mod with invalid divisor', () => {
+      const dbname = uuid();
+      const endpoint = `/${dbname}/_find`;
+      const db = couch.addDatabase(dbname);
+      const query = {
+        selector: {
+          'data.n': {
+            $mod: ['2', 0]
+          }
+        }
+      };
+
+      db.addDocs([ ...docs ]);
+
+      return api.post(endpoint).send(query).expect(200, {
         docs: []
-      }))
-      .then(() => api.post(endpoint).send(queryWithModInvalidRemainder).expect(200, {
+      });
+    });
+
+    it('$mod with invalid remainder', () => {
+      const dbname = uuid();
+      const endpoint = `/${dbname}/_find`;
+      const db = couch.addDatabase(dbname);
+      const query = {
+        selector: {
+          'data.n': {
+            $mod: [2, '0']
+          }
+        }
+      };
+
+      db.addDocs([ ...docs ]);
+
+      return api.post(endpoint).send(query).expect(200, {
         docs: []
-      }))
-      .then(() => api.post(endpoint).send(queryWithModInvalidOperator).expect(400))
-      .then(() => api.post(endpoint).send(queryWithSortDefaultAsc).expect(200, {
+      });
+    });
+
+    it('invalid operator', () => {
+      const dbname = uuid();
+      const endpoint = `/${dbname}/_find`;
+      const db = couch.addDatabase(dbname);
+      const query = {
+        selector: {
+          'data.n': {
+            $invalidOperator: 'x'
+          }
+        }
+      };
+
+      db.addDocs([ ...docs ]);
+
+      return api.post(endpoint).send(query).expect(400);
+    });
+
+    it('sort with default asc', () => {
+      const dbname = uuid();
+      const endpoint = `/${dbname}/_find`;
+      const db = couch.addDatabase(dbname);
+      const query = {
+        selector: {
+          type: 'posts'
+        },
+        sort: [
+          'data.s'
+        ]
+      };
+
+      db.addDocs([ ...docs ]);
+
+      return api.post(endpoint).send(query).expect(200, {
         docs: [
           db.docs.x100,
           db.docs.x001,
@@ -769,8 +907,26 @@ describe('Database', () => {
           db.docs.x110,
           db.docs.x000,
         ]
-      }))
-      .then(() => api.post(endpoint).send(queryWithSortAscAndFields).expect(200, {
+      });
+    });
+
+    it('sort with asc and fields', () => {
+      const dbname = uuid();
+      const endpoint = `/${dbname}/_find`;
+      const db = couch.addDatabase(dbname);
+      const query = {
+        selector: {
+          type: 'posts'
+        },
+        sort: [
+          { 'data.s': 'asc' }
+        ],
+        fields: ['_id']
+      };
+
+      db.addDocs([ ...docs ]);
+
+      return api.post(endpoint).send(query).expect(200, {
         docs: [
           { _id: db.docs.x100._id },
           { _id: db.docs.x001._id },
@@ -778,8 +934,25 @@ describe('Database', () => {
           { _id: db.docs.x110._id },
           { _id: db.docs.x000._id },
         ]
-      }))
-      .then(() => api.post(endpoint).send(queryWithSortDesc).expect(200, {
+      });
+    });
+
+    it('sort with desc', () => {
+      const dbname = uuid();
+      const endpoint = `/${dbname}/_find`;
+      const db = couch.addDatabase(dbname);
+      const query = {
+        selector: {
+          type: 'posts'
+        },
+        sort: [
+          { 'data.s': 'desc' }
+        ]
+      };
+
+      db.addDocs([ ...docs ]);
+
+      return api.post(endpoint).send(query).expect(200, {
         docs: [
           db.docs.x000,
           db.docs.x110,
@@ -787,26 +960,131 @@ describe('Database', () => {
           db.docs.x001,
           db.docs.x100,
         ]
-      }))
-      .then(() => api.post(endpoint).send(queryWithInvalidAndValue).expect(400))
-      .then(() => api.post(endpoint).send(queryWithAnd).expect(200, {
+      });
+    });
+
+    it('$and with invalid value', () => {
+      const dbname = uuid();
+      const endpoint = `/${dbname}/_find`;
+      const db = couch.addDatabase(dbname);
+      const query = {
+        selector: {
+          $and: {}
+        }
+      };
+
+      db.addDocs([ ...docs ]);
+
+      return api.post(endpoint).send(query).expect(400);
+    });
+
+    it('$and', () => {
+      const dbname = uuid();
+      const endpoint = `/${dbname}/_find`;
+      const db = couch.addDatabase(dbname);
+      const query = {
+        selector: {
+          $and: [
+            {
+              type: 'posts'
+            },
+            {
+              'data.desc': null
+            }
+          ]
+        }
+      };
+
+      db.addDocs([ ...docs ]);
+
+      return api.post(endpoint).send(query).expect(200, {
         docs: [
           db.docs.x110,
         ]
-      }))
-      .then(() => api.post(endpoint).send(queryWithInvalidOrValue).expect(400))
-      .then(() => api.post(endpoint).send(queryWithOr).expect(200, {
+      });
+    });
+
+    it('$or with invalid value', () => {
+      const dbname = uuid();
+      const endpoint = `/${dbname}/_find`;
+      const db = couch.addDatabase(dbname);
+      const query = {
+        selector: {
+          $or: {}
+        }
+      };
+
+      db.addDocs([ ...docs ]);
+
+      return api.post(endpoint).send(query).expect(400);
+    });
+
+    it('$or', () => {
+      const dbname = uuid();
+      const endpoint = `/${dbname}/_find`;
+      const db = couch.addDatabase(dbname);
+      const query = {
+        selector: {
+          $or: [
+            {
+              'data.title': 'Post 1'
+            },
+            {
+              'data.title': {
+                $regex: '(Post|Page) 1'
+              }
+            }
+          ]
+        }
+      };
+
+      db.addDocs([ ...docs ]);
+
+      return api.post(endpoint).send(query).expect(200, {
         docs: [
           db.docs.x000,
           db.docs.x010,
         ]
-      }))
-      .then(() => api.post(endpoint).send(queryWithInvalidNotValue).expect(400))
-      .then(() => api.post(endpoint).send(queryWithNot).expect(200, {
+      });
+    });
+
+    it('$not with invalid value', () => {
+      const dbname = uuid();
+      const endpoint = `/${dbname}/_find`;
+      const db = couch.addDatabase(dbname);
+      const query = {
+        selector: {
+          $not: []
+        }
+      };
+
+      db.addDocs([ ...docs ]);
+
+      return api.post(endpoint).send(query).expect(400);
+    });
+
+    it('$not', () => {
+      const dbname = uuid();
+      const endpoint = `/${dbname}/_find`;
+      const db = couch.addDatabase(dbname);
+      const query = {
+        selector: {
+          $not: {
+            'data.desc': {
+              $ne: null
+            }
+          }
+        }
+      };
+
+      db.addDocs([ ...docs ]);
+
+      return api.post(endpoint).send(query).expect(200, {
         docs: [
           db.docs.x011,
           db.docs.x110,
         ]
-      }));
+      });
+    });
   });
 });

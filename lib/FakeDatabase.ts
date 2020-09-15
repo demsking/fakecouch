@@ -411,7 +411,7 @@ export default class FakeDatabase implements IFakeCouch.Database {
     delete this.indexes[ddocid];
   }
 
-  _find(selector: Selector, items = Object.values(this.docs)): IFakeCouch.DocumentRef[] {
+  _find(selector: Selector, items: IFakeCouch.DocumentRef[]): IFakeCouch.DocumentRef[] {
     const paths = Object.keys(selector);
 
     return items.filter((item) => paths.every((path) => {
