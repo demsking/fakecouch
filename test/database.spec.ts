@@ -245,6 +245,72 @@ describe('Database', () => {
     return api.post(`/${dbname}/_all_docs/queries`).expect(501, 'Not Yet Implemented');
   });
 
+  it('POST /{db}/_bulk_get', () => {
+    const dbname = uuid();
+    const endpoint = `/${dbname}/_bulk_get`;
+    const db = couch.addDatabase(dbname);
+
+    db.addDocs([
+      { _id: 'x000', data: 1 },
+      { _id: 'x001', data: 2 },
+      { _id: 'x010', data: 3 },
+      { _id: 'x011', data: 4 },
+      { _id: 'x100', data: 5 },
+    ]);
+
+    const query = Object.values(db.docs).map((doc) => ({
+      id: doc._id
+    }));
+
+    const expectedRows = Object.values(db.docs).map((doc) => ({
+      id: doc._id,
+      docs: [
+        {
+          ok: {
+            _id: doc._id,
+            _rev: doc._rev,
+            value: doc,
+            _revisions: {
+              start: 1,
+              ids: [
+                doc._rev.split('-')[1]
+              ]
+            }
+          }
+        }
+      ]
+    }));
+
+    return api.post(endpoint).send({ docs: query }).expect(200, {
+      results: expectedRows
+    });
+  });
+
+  it('POST /{db}/_bulk_docs', () => {
+    const dbname = uuid();
+    const endpoint = `/${dbname}/_bulk_docs`;
+    const db = couch.addDatabase(dbname);
+    const docs = [
+      { _id: 'x000', data: 1, _delete: true },
+      { _id: 'x001', data: 2 },
+      { _id: 'x010', data: 3 },
+      { _id: 'x011', data: 4 },
+      { _id: 'x100', data: 5 },
+    ];
+
+    db.addDoc({ _id: 'x000', data: 1 });
+
+    return api.post(endpoint).send({ docs }).expect(201).then(({ body }) => {
+      const expected = Object.values(db.docs).map((doc) => ({
+        ok: true,
+        id: doc._id,
+        rev: doc._rev,
+      }));
+
+      expect(body).toEqual(expected);
+    });
+  });
+
   // it('GET, POST /{db}/_design_docs', () => {
   //   const dbname = uuid();
   //   const endpoint = `/${dbname}/_design_docs`;
@@ -270,10 +336,6 @@ describe('Database', () => {
   //   return api.get(endpoint)
   //     .expect(200, { offset: 0, rows: [], total_rows: 0 });
   // });
-
-  it('', () => {
-    return api.get('').expect(200);
-  });
 
   it('', () => {
     return api.get('').expect(200);

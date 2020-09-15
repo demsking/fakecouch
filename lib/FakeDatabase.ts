@@ -194,7 +194,7 @@ export default class FakeDatabase implements IFakeCouch.Database {
     this.info.db_name = name;
   }
 
-  _addDoc(body: Record<string, any>, docid?: string): any {
+  _addDoc(body: Record<string, any>, docid?: string): IFakeCouch.DocumentRef {
     const doc = { ...body };
 
     if (!doc._id) {
@@ -216,7 +216,7 @@ export default class FakeDatabase implements IFakeCouch.Database {
       }
     }
 
-    return doc;
+    return doc as any;
   }
 
   addDoc(doc: IFakeCouch.Document, docid?: string): IFakeCouch.DocumentRef {

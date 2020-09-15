@@ -693,6 +693,10 @@ export default class FakeCouchServer implements IFakeCouch.Server {
           { ok: true }
         ];
       })
+      /**
+       * DELETE /{db}
+       * @see https://docs.couchdb.org/en/latest/api/database/common.html#delete--db
+       */
       .delete('/:dbname', (req) => this.handleDatabaseRequest(req, (db) => {
         delete this.databases[db.name];
 
@@ -817,8 +821,13 @@ export default class FakeCouchServer implements IFakeCouch.Server {
        * @see https://docs.couchdb.org/en/latest/api/database/bulk-api.html#post--db-_all_docs-queries
        */
       .post('/:dbname/_all_docs/queries', (req) => this.handleDatabaseRequest(req, (db) => [501, 'Not Yet Implemented']))
+      /**
+       * POST /{db}/_bulk_get
+       * @see https://docs.couchdb.org/en/latest/api/database/bulk-api.html#post--db-_bulk_get
+       */
       .post('/:dbname/_bulk_get', (req) => this.handleDatabaseRequest(req, (db) => {
-        const result = req.body.docs.map(({ id }: any) => db.docs[id]).map((doc: Record<string, any>) => ({
+        const docs = req.body.docs.map(({ id }: any) => db.docs[id]);
+        const results = docs.map((doc: IFakeCouch.DocumentRef) => ({
           id: doc._id,
           docs: [
             {
@@ -829,7 +838,7 @@ export default class FakeCouchServer implements IFakeCouch.Server {
                 _revisions: {
                   start: 1,
                   ids: [
-                    doc._rev.spli('-')[1]
+                    doc._rev.split('-')[1]
                   ]
                 }
               }
@@ -839,11 +848,16 @@ export default class FakeCouchServer implements IFakeCouch.Server {
 
         return [
           200,
-          { result }
+          { results }
         ];
       }))
+      /**
+       * POST /{db}/_bulk_docs
+       * @see https://docs.couchdb.org/en/latest/api/database/bulk-api.html#post--db-_bulk_docs
+       */
       .post('/:dbname/_bulk_docs', (req) => this.handleDatabaseRequest(req, (db) => {
-        const result = req.body.docs.map((doc: any) => db._addDoc(doc)).map((doc: Record<string, any>) => ({
+        const docs = req.body.docs.map((doc: IFakeCouch.Document) => db._addDoc(doc));
+        const result = docs.map((doc: IFakeCouch.DocumentRef) => ({
           ok: true,
           id: doc._id,
           rev: doc._rev
@@ -853,7 +867,7 @@ export default class FakeCouchServer implements IFakeCouch.Server {
 
         return [
           201,
-          { result }
+          result
         ];
       }))
       /**
