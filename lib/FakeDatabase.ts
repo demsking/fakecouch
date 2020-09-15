@@ -507,7 +507,7 @@ export default class FakeDatabase implements IFakeCouch.Database {
     const startTime = process.hrtime();
     const items = Object.values(this.docs);
     const result: QueryResponse = {
-      docs: []
+      docs: items
     };
 
     Object.keys(selector).forEach((key) => {
@@ -531,6 +531,8 @@ export default class FakeDatabase implements IFakeCouch.Database {
             throw Error('Invalid $or value');
           }
 
+          result.docs = [];
+
           selectorValue.forEach((itemSelector) => {
             this._find(itemSelector, items).forEach((item) => {
               if (!result.docs.includes(item)) {
@@ -540,8 +542,18 @@ export default class FakeDatabase implements IFakeCouch.Database {
           });
           break;
 
+        case '$not': {
+          if (Array.isArray(selectorValue)) {
+            throw Error('Invalid $not value');
+          }
+
+          const notResult = this._find(selectorValue, result.docs);
+
+          result.docs = result.docs.filter((item) => !notResult.includes(item));
+          break;
+        }
+
         default:
-          result.docs = items;
           result.docs = this._find({ [key]: selectorValue }, result.docs);
       }
     });

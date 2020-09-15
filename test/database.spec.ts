@@ -569,6 +569,22 @@ describe('Database', () => {
       }
     };
 
+    const queryWithInvalidNotValue = {
+      selector: {
+        $not: []
+      }
+    };
+
+    const queryWithNot = {
+      selector: {
+        $not: {
+          'data.desc': {
+            $ne: null
+          }
+        }
+      }
+    };
+
     db.addDocs([
       { _id: 'x000', type: 'posts', data: { title: 'Post 1', s: 5, desc: 'Lorem 1', n: 1, enabled: true } },
       { _id: 'x001', type: 'posts', data: { title: 'Post 2', s: 2, desc: 'Lorem 2', n: 2, enabled: false } },
@@ -783,6 +799,13 @@ describe('Database', () => {
         docs: [
           db.docs.x000,
           db.docs.x010,
+        ]
+      }))
+      .then(() => api.post(endpoint).send(queryWithInvalidNotValue).expect(400))
+      .then(() => api.post(endpoint).send(queryWithNot).expect(200, {
+        docs: [
+          db.docs.x011,
+          db.docs.x110,
         ]
       }));
   });
