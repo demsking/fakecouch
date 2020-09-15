@@ -519,6 +519,38 @@ export default class FakeDatabase implements IFakeCouch.Database {
       });
     }
 
+    if (sort.length) {
+      sort.forEach((sortItem) => {
+        if (typeof sortItem === 'string') {
+          sortItem = {
+            [sortItem]: 'asc'
+          };
+        }
+
+        for (const sortFieldPath in sortItem) {
+          const sortType = sortItem[sortFieldPath];
+
+          if (sortType === 'asc') {
+            result.docs.sort((a, b) => {
+              const fieldAValue: any = dotProp.get(a, sortFieldPath);
+              const fieldBValue: any = dotProp.get(b, sortFieldPath);
+
+              return `${fieldAValue}`.localeCompare(`${fieldBValue}`);
+            });
+          } else {
+            result.docs.sort((a, b) => {
+              const fieldAValue: any = dotProp.get(a, sortFieldPath);
+              const fieldBValue: any = dotProp.get(b, sortFieldPath);
+
+              return `${fieldBValue}`.localeCompare(`${fieldAValue}`);
+            });
+          }
+
+          break;
+        }
+      });
+    }
+
     if (execution_stats) {
       result.execution_stats = {
         total_keys_examined: 0,

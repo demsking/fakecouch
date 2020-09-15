@@ -501,14 +501,41 @@ describe('Database', () => {
       }
     };
 
+    const queryWithSortDefaultAsc = {
+      selector: {
+        type: 'posts'
+      },
+      sort: [
+        'data.s'
+      ]
+    };
+
+    const queryWithSortAsc = {
+      selector: {
+        type: 'posts'
+      },
+      sort: [
+        { 'data.s': 'asc' }
+      ]
+    };
+
+    const queryWithSortDesc = {
+      selector: {
+        type: 'posts'
+      },
+      sort: [
+        { 'data.s': 'desc' }
+      ]
+    };
+
     db.addDocs([
-      { _id: 'x000', type: 'posts', data: { title: 'Post 1', desc: 'Lorem 1', n: 1, enabled: true } },
-      { _id: 'x001', type: 'posts', data: { title: 'Post 2', desc: 'Lorem 2', n: 2, enabled: false } },
-      { _id: 'x010', type: 'pages', data: { title: 'Page 1', desc: 'Lorem 1', n: 1, slug: 'page1' } },
-      { _id: 'x011', type: 'pages', data: { title: 'Page 2', desc: null, n: 2, slug: 'page2' } },
-      { _id: 'x100', type: 'posts', data: { title: 'Post 3', desc: 'Lorem 3', n: 3 } },
-      { _id: 'x101', type: 'posts', data: { title: 'Post 4', desc: 'Lorem 4', n: 4, list: [1, 2] } },
-      { _id: 'x110', type: 'posts', data: { title: 'Post 5', desc: null, n: 5, list: [1] } },
+      { _id: 'x000', type: 'posts', data: { title: 'Post 1', s: 5, desc: 'Lorem 1', n: 1, enabled: true } },
+      { _id: 'x001', type: 'posts', data: { title: 'Post 2', s: 2, desc: 'Lorem 2', n: 2, enabled: false } },
+      { _id: 'x010', type: 'pages', data: { title: 'Page 1', s: 2, desc: 'Lorem 1', n: 1, slug: 'page1' } },
+      { _id: 'x011', type: 'pages', data: { title: 'Page 2', s: 1, desc: null, n: 2, slug: 'page2' } },
+      { _id: 'x100', type: 'posts', data: { title: 'Post 3', s: 1, desc: 'Lorem 3', n: 3 } },
+      { _id: 'x101', type: 'posts', data: { title: 'Post 4', s: 3, desc: 'Lorem 4', n: 4, list: [1, 2] } },
+      { _id: 'x110', type: 'posts', data: { title: 'Post 5', s: 4, desc: null, n: 5, list: [1] } },
     ]);
 
     return api.post(endpoint).send({ limit: 2 }).expect(400)
@@ -676,6 +703,33 @@ describe('Database', () => {
       .then(() => api.post(endpoint).send(queryWithModInvalidRemainder).expect(200, {
         docs: []
       }))
-      .then(() => api.post(endpoint).send(queryWithModInvalidOperator).expect(400));
+      .then(() => api.post(endpoint).send(queryWithModInvalidOperator).expect(400))
+      .then(() => api.post(endpoint).send(queryWithSortDefaultAsc).expect(200, {
+        docs: [
+          db.docs.x100,
+          db.docs.x001,
+          db.docs.x101,
+          db.docs.x110,
+          db.docs.x000,
+        ]
+      }))
+      .then(() => api.post(endpoint).send(queryWithSortAsc).expect(200, {
+        docs: [
+          db.docs.x100,
+          db.docs.x001,
+          db.docs.x101,
+          db.docs.x110,
+          db.docs.x000,
+        ]
+      }))
+      .then(() => api.post(endpoint).send(queryWithSortDesc).expect(200, {
+        docs: [
+          db.docs.x000,
+          db.docs.x110,
+          db.docs.x101,
+          db.docs.x001,
+          db.docs.x100,
+        ]
+      }));
   });
 });
