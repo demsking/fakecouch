@@ -1,10 +1,11 @@
 /* eslint-disable no-eval */
 /* eslint-disable camelcase */
 
-import equal from 'deep-equal';
 import * as dotProp from 'dot-prop';
 import { v4 as uuid } from 'uuid';
 import { IFakeCouch } from '../typings/IFakeCouch';
+
+const equal = require('deep-equal');
 
 type LocalView = {
   items: LocalViewItem[];
