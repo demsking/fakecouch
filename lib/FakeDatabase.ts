@@ -428,86 +428,84 @@ export default class FakeDatabase implements IFakeCouch.Database {
       docs: []
     };
 
-    result.docs = items
-      .filter((item) => paths.every((path) => {
-        const fieldValue: any = dotProp.get(item, path);
-        const selectorValue = selector[path];
+    result.docs = items.filter((item) => paths.every((path) => {
+      const fieldValue: any = dotProp.get(item, path);
+      const selectorValue = selector[path];
 
-        if (typeof selectorValue !== 'object') {
-          return fieldValue === selectorValue;
-        }
+      if (typeof selectorValue !== 'object') {
+        return fieldValue === selectorValue;
+      }
 
-        if (selectorValue === null) {
-          return fieldValue === null;
-        }
+      if (selectorValue === null) {
+        return fieldValue === null;
+      }
 
-        if (selectorValue instanceof Array) {
-          return fieldValue instanceof Array
-            && selectorValue.length === fieldValue.length
-            && fieldValue.every((item, index) => equal(item, selectorValue[index]));
-        }
+      if (selectorValue instanceof Array) {
+        return fieldValue instanceof Array
+          && selectorValue.length === fieldValue.length
+          && fieldValue.every((item, index) => equal(item, selectorValue[index]));
+      }
 
-        return Object.keys(selectorValue).every((operator) => {
-          const operatorValue = selectorValue[operator];
+      return Object.keys(selectorValue).every((operator) => {
+        const operatorValue = selectorValue[operator];
 
-          switch (operator) {
-            case '$eq':
-              return equal(fieldValue, operatorValue);
+        switch (operator) {
+          case '$eq':
+            return equal(fieldValue, operatorValue);
 
-            case '$ne':
-              return !equal(fieldValue, operatorValue);
+          case '$ne':
+            return !equal(fieldValue, operatorValue);
 
-            case '$lt':
-              return fieldValue < operatorValue;
+          case '$lt':
+            return fieldValue < operatorValue;
 
-            case '$gt':
-              return fieldValue > operatorValue;
+          case '$gt':
+            return fieldValue > operatorValue;
 
-            case '$lte':
-              return fieldValue <= operatorValue;
+          case '$lte':
+            return fieldValue <= operatorValue;
 
-            case '$gte':
-              return fieldValue >= operatorValue;
+          case '$gte':
+            return fieldValue >= operatorValue;
 
-            case '$exists':
-              return operatorValue
-                ? typeof fieldValue !== 'undefined'
-                : typeof fieldValue === 'undefined';
+          case '$exists':
+            return operatorValue
+              ? typeof fieldValue !== 'undefined'
+              : typeof fieldValue === 'undefined';
 
-            case '$type':
-              return getCouchType(fieldValue) === operatorValue;
+          case '$type':
+            return getCouchType(fieldValue) === operatorValue;
 
-            case '$in':
-              return fieldValue instanceof Array
-                && operatorValue instanceof Array
-                && operatorValue.some((item) => fieldValue.includes(item));
+          case '$in':
+            return fieldValue instanceof Array
+              && operatorValue instanceof Array
+              && operatorValue.some((item) => fieldValue.includes(item));
 
-            case '$nin':
-              return fieldValue instanceof Array
-                && operatorValue instanceof Array
-                && operatorValue.some((item) => !fieldValue.includes(item));
+          case '$nin':
+            return fieldValue instanceof Array
+              && operatorValue instanceof Array
+              && operatorValue.some((item) => !fieldValue.includes(item));
 
-            case '$size':
-              return fieldValue instanceof Array && fieldValue.length === operatorValue;
+          case '$size':
+            return fieldValue instanceof Array && fieldValue.length === operatorValue;
 
-            case '$mod': {
-              const [divisor, remainder] = operatorValue;
+          case '$mod': {
+            const [divisor, remainder] = operatorValue;
 
-              if (typeof divisor !== 'number' || typeof remainder !== 'number') {
-                return false;
-              }
-
-              return fieldValue % divisor === remainder;
+            if (typeof divisor !== 'number' || typeof remainder !== 'number') {
+              return false;
             }
 
-            case '$regex':
-              return new RegExp(operatorValue).test(`${fieldValue}`);
+            return fieldValue % divisor === remainder;
           }
 
-          throw new Error('Invalid operator');
-        });
-      }))
-      .slice(skip, skip + limit);
+          case '$regex':
+            return new RegExp(operatorValue).test(`${fieldValue}`);
+        }
+
+        throw new Error('Invalid operator');
+      });
+    }));
 
     if (sort.length) {
       sort.forEach((sortItem) => {
@@ -540,6 +538,8 @@ export default class FakeDatabase implements IFakeCouch.Database {
         }
       });
     }
+
+    result.docs = result.docs.slice(skip, skip + limit);
 
     if (fields.length) {
       result.docs = result.docs.map((item) => {
