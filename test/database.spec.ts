@@ -291,7 +291,7 @@ describe('Database', () => {
     const endpoint = `/${dbname}/_bulk_docs`;
     const db = couch.addDatabase(dbname);
     const docs = [
-      { _id: 'x000', data: 1, _delete: true },
+      { _id: 'x000', data: 1, _deleted: true },
       { _id: 'x001', data: 2 },
       { _id: 'x010', data: 3 },
       { _id: 'x011', data: 4 },
@@ -311,37 +311,371 @@ describe('Database', () => {
     });
   });
 
-  // it('GET, POST /{db}/_design_docs', () => {
-  //   const dbname = uuid();
-  //   const endpoint = `/${dbname}/_design_docs`;
-  //   const db = couch.addDatabase(dbname);
+  it('POST /{db}/_find', () => {
+    const dbname = uuid();
+    const endpoint = `/${dbname}/_find`;
+    const db = couch.addDatabase(dbname);
+    const query = {
+      skip: 1,
+      limit: 2,
+      selector: {
+        type: 'posts',
+        'data.title': {
+          $regex: 'Post (1|3|4)'
+        }
+      }
+    };
 
-  //   db.addDocs([
-  //     { _id: 'x000', type: 'posts', data: 1 },
-  //     { _id: 'x001', type: 'posts', data: 2 },
-  //     { _id: 'x010', type: 'pages', data: 3 },
-  //     { _id: 'x011', type: 'pages', data: 4 },
-  //     { _id: 'x100', type: 'posts', data: 5 },
-  //   ]);
+    const queryWithFields = {
+      ...query,
+      fields: [
+        'type',
+        'data.n'
+      ],
+      execution_stats: true
+    };
 
-  //   const ddoc = db.addDesign({
-  //     _id: '_design/posts',
-  //     views: {
-  //       items: {
-  //         map: '(doc) => {if(doc.type === "posts") emit(doc._id, doc._rev)}'
-  //       }
-  //     }
-  //   });
+    const queryWithGtLt = {
+      selector: {
+        'data.n': {
+          $gt: 1,
+          $lt: 3,
+        }
+      }
+    };
 
-  //   return api.get(endpoint)
-  //     .expect(200, { offset: 0, rows: [], total_rows: 0 });
-  // });
+    const queryWithGteLte = {
+      selector: {
+        'data.n': {
+          $gte: 2,
+          $lte: 3,
+        }
+      }
+    };
 
-  it('', () => {
-    return api.get('').expect(200);
-  });
+    const queryWithNull = {
+      selector: {
+        'data.desc': null
+      }
+    };
 
-  it('', () => {
-    return api.get('').expect(200);
+    const queryWithEq = {
+      selector: {
+        type: {
+          $eq: 'pages'
+        }
+      }
+    };
+
+    const queryWithNe = {
+      selector: {
+        type: {
+          $ne: 'posts'
+        }
+      }
+    };
+
+    const queryWithArray = {
+      selector: {
+        'data.list': [1]
+      }
+    };
+
+    const queryWithIn = {
+      selector: {
+        'data.list': {
+          $in: [2]
+        }
+      }
+    };
+
+    const queryWithNin = {
+      selector: {
+        'data.list': {
+          $nin: [2]
+        }
+      }
+    };
+
+    const queryWithSize = {
+      selector: {
+        'data.list': {
+          $size: 2
+        }
+      }
+    };
+
+    const queryWithExistsTrue = {
+      selector: {
+        'data.slug': {
+          $exists: true
+        }
+      }
+    };
+
+    const queryWithExistsFalse = {
+      selector: {
+        'data.slug': {
+          $exists: false
+        }
+      }
+    };
+
+    const queryWithTypeString = {
+      selector: {
+        'data.desc': {
+          $type: 'string'
+        }
+      }
+    };
+
+    const queryWithTypeBoolean = {
+      selector: {
+        'data.enabled': {
+          $type: 'boolean'
+        }
+      }
+    };
+
+    const queryWithTypeNull = {
+      selector: {
+        'data.desc': {
+          $type: 'null'
+        }
+      }
+    };
+
+    const queryWithTypeNumber = {
+      selector: {
+        'data.n': {
+          $type: 'number'
+        }
+      }
+    };
+
+    const queryWithTypeArray = {
+      selector: {
+        'data.list': {
+          $type: 'array'
+        }
+      }
+    };
+
+    const queryWithTypeObject = {
+      selector: {
+        data: {
+          $type: 'object'
+        }
+      }
+    };
+
+    const queryWithMod = {
+      selector: {
+        'data.n': {
+          $mod: [2, 0]
+        }
+      }
+    };
+
+    const queryWithModInvalidDivisor = {
+      selector: {
+        'data.n': {
+          $mod: ['2', 0]
+        }
+      }
+    };
+
+    const queryWithModInvalidRemainder = {
+      selector: {
+        'data.n': {
+          $mod: [2, '0']
+        }
+      }
+    };
+
+    const queryWithModInvalidOperator = {
+      selector: {
+        'data.n': {
+          $invalidOperator: 'x'
+        }
+      }
+    };
+
+    db.addDocs([
+      { _id: 'x000', type: 'posts', data: { title: 'Post 1', desc: 'Lorem 1', n: 1, enabled: true } },
+      { _id: 'x001', type: 'posts', data: { title: 'Post 2', desc: 'Lorem 2', n: 2, enabled: false } },
+      { _id: 'x010', type: 'pages', data: { title: 'Page 1', desc: 'Lorem 1', n: 1, slug: 'page1' } },
+      { _id: 'x011', type: 'pages', data: { title: 'Page 2', desc: null, n: 2, slug: 'page2' } },
+      { _id: 'x100', type: 'posts', data: { title: 'Post 3', desc: 'Lorem 3', n: 3 } },
+      { _id: 'x101', type: 'posts', data: { title: 'Post 4', desc: 'Lorem 4', n: 4, list: [1, 2] } },
+      { _id: 'x110', type: 'posts', data: { title: 'Post 5', desc: null, n: 5, list: [1] } },
+    ]);
+
+    return api.post(endpoint).send({ limit: 2 }).expect(400)
+      .then(() => api.post(endpoint).send(query).expect(200, {
+        docs: [
+          db.docs.x100,
+          db.docs.x101,
+        ]
+      }))
+      .then(() => api.post(endpoint).send(queryWithFields).expect(200))
+      .then(({ body }) => {
+        expect(typeof body.execution_stats.execution_time_ms).toBe('number');
+
+        body.execution_stats.execution_time_ms = -1;
+
+        expect(body).toEqual({
+          docs: [
+            {
+              type: db.docs.x100.type,
+              data: {
+                n: db.docs.x100.data.n
+              }
+            },
+            {
+              type: db.docs.x101.type,
+              data: {
+                n: db.docs.x101.data.n
+              }
+            },
+          ],
+          execution_stats: {
+            total_keys_examined: 0,
+            total_docs_examined: 7,
+            total_quorum_docs_examined: 0,
+            results_returned: 2,
+            execution_time_ms: -1
+          }
+        });
+      })
+      .then(() => api.post(endpoint).send(queryWithGtLt).expect(200, {
+        docs: [
+          db.docs.x001,
+          db.docs.x011,
+        ]
+      }))
+      .then(() => api.post(endpoint).send(queryWithGteLte).expect(200, {
+        docs: [
+          db.docs.x001,
+          db.docs.x011,
+          db.docs.x100,
+        ]
+      }))
+      .then(() => api.post(endpoint).send(queryWithNull).expect(200, {
+        docs: [
+          db.docs.x011,
+          db.docs.x110,
+        ]
+      }))
+      .then(() => api.post(endpoint).send(queryWithEq).expect(200, {
+        docs: [
+          db.docs.x010,
+          db.docs.x011,
+        ]
+      }))
+      .then(() => api.post(endpoint).send(queryWithNe).expect(200, {
+        docs: [
+          db.docs.x010,
+          db.docs.x011,
+        ]
+      }))
+      .then(() => api.post(endpoint).send(queryWithArray).expect(200, {
+        docs: [
+          db.docs.x110,
+        ]
+      }))
+      .then(() => api.post(endpoint).send(queryWithIn).expect(200, {
+        docs: [
+          db.docs.x101,
+        ]
+      }))
+      .then(() => api.post(endpoint).send(queryWithNin).expect(200, {
+        docs: [
+          db.docs.x110,
+        ]
+      }))
+      .then(() => api.post(endpoint).send(queryWithSize).expect(200, {
+        docs: [
+          db.docs.x101,
+        ]
+      }))
+      .then(() => api.post(endpoint).send(queryWithExistsTrue).expect(200, {
+        docs: [
+          db.docs.x010,
+          db.docs.x011,
+        ]
+      }))
+      .then(() => api.post(endpoint).send(queryWithExistsFalse).expect(200, {
+        docs: [
+          db.docs.x000,
+          db.docs.x001,
+          db.docs.x100,
+          db.docs.x101,
+          db.docs.x110,
+        ]
+      }))
+      .then(() => api.post(endpoint).send(queryWithTypeString).expect(200, {
+        docs: [
+          db.docs.x000,
+          db.docs.x001,
+          db.docs.x010,
+          db.docs.x100,
+          db.docs.x101,
+        ]
+      }))
+      .then(() => api.post(endpoint).send(queryWithTypeBoolean).expect(200, {
+        docs: [
+          db.docs.x000,
+          db.docs.x001,
+        ]
+      }))
+      .then(() => api.post(endpoint).send(queryWithTypeNull).expect(200, {
+        docs: [
+          db.docs.x011,
+          db.docs.x110,
+        ]
+      }))
+      .then(() => api.post(endpoint).send(queryWithTypeNumber).expect(200, {
+        docs: [
+          db.docs.x000,
+          db.docs.x001,
+          db.docs.x010,
+          db.docs.x011,
+          db.docs.x100,
+          db.docs.x101,
+          db.docs.x110,
+        ]
+      }))
+      .then(() => api.post(endpoint).send(queryWithTypeArray).expect(200, {
+        docs: [
+          db.docs.x101,
+          db.docs.x110,
+        ]
+      }))
+      .then(() => api.post(endpoint).send(queryWithTypeObject).expect(200, {
+        docs: [
+          db.docs.x000,
+          db.docs.x001,
+          db.docs.x010,
+          db.docs.x011,
+          db.docs.x100,
+          db.docs.x101,
+          db.docs.x110,
+        ]
+      }))
+      .then(() => api.post(endpoint).send(queryWithMod).expect(200, {
+        docs: [
+          db.docs.x001,
+          db.docs.x011,
+          db.docs.x101,
+        ]
+      }))
+      .then(() => api.post(endpoint).send(queryWithModInvalidDivisor).expect(200, {
+        docs: []
+      }))
+      .then(() => api.post(endpoint).send(queryWithModInvalidRemainder).expect(200, {
+        docs: []
+      }))
+      .then(() => api.post(endpoint).send(queryWithModInvalidOperator).expect(400));
   });
 });

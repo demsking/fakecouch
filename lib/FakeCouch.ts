@@ -879,7 +879,11 @@ export default class FakeCouchServer implements IFakeCouch.Server {
           return [400];
         }
 
-        return [200, db.find(req.body)];
+        try {
+          return [200, db.find(req.body)];
+        } catch (err) {
+          return [400];
+        }
       }))
       /**
        * POST /{db}/_index

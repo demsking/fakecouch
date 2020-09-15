@@ -1,6 +1,7 @@
 /* eslint-disable no-eval */
 /* eslint-disable camelcase */
 
+import equal from 'deep-equal';
 import * as dotProp from 'dot-prop';
 import { v4 as uuid } from 'uuid';
 import { IFakeCouch } from '../typings/IFakeCouch';
@@ -119,11 +120,13 @@ interface GenericRequest {
 interface QueryRequest extends GenericRequest {
   /** Defines a selector to filter the results. Required */
   selector: Selector;
+  execution_stats?: boolean;
+  sort?: Record<string, 'asc' | 'desc'>[];
 }
 
 interface QueryResponse {
-  docs: any[];
-  execution_stats: {
+  docs: IFakeCouch.DocumentRef[];
+  execution_stats?: {
     total_keys_examined: number;
     total_docs_examined: number;
     total_quorum_docs_examined: number;
@@ -147,6 +150,18 @@ type Row = {
   value: any;
   doc: IFakeCouch.DocumentRef;
 };
+
+function getCouchType(value: unknown) {
+  if (value instanceof Array) {
+    return 'array';
+  }
+
+  if (value === null) {
+    return 'null';
+  }
+
+  return typeof value;
+}
 
 export default class FakeDatabase implements IFakeCouch.Database {
   readonly name: string;
@@ -395,39 +410,107 @@ export default class FakeDatabase implements IFakeCouch.Database {
     delete this.indexes[ddocid];
   }
 
-  find({ selector, limit = 25, skip = 0, fields = [] }: QueryRequest): QueryResponse {
+  find(request: QueryRequest): QueryResponse {
+    const {
+      selector,
+      limit = 25,
+      skip = 0,
+      fields = [],
+      sort = [],
+      execution_stats = false
+    } = request;
+
+    const startTime = process.hrtime();
     const items = Object.values(this.docs);
     const paths = Object.keys(selector);
-    let docs: any[] = items
-      .filter((item) => {
-        return paths.every((path) => {
-          const fieldValue = dotProp.get(item, path);
-          const selectorValue = selector[path];
+    const result: QueryResponse = {
+      docs: []
+    };
 
-          if (typeof selectorValue !== 'object') {
-            return fieldValue === selectorValue;
-          } if (selectorValue === null) {
-            return selectorValue === null;
-          } if (!Array.isArray(selectorValue)) {
-            for (const operator in selectorValue) {
-              const operatorValue = selectorValue[operator];
+    result.docs = items
+      .filter((item) => paths.every((path) => {
+        const fieldValue: any = dotProp.get(item, path);
+        const selectorValue = selector[path];
 
-              switch (operator) {
-                case '$regex': {
-                  return new RegExp(operatorValue).test(`${fieldValue}`);
-                }
+        if (typeof selectorValue !== 'object') {
+          return fieldValue === selectorValue;
+        }
+
+        if (selectorValue === null) {
+          return fieldValue === null;
+        }
+
+        if (selectorValue instanceof Array) {
+          return fieldValue instanceof Array
+            && selectorValue.length === fieldValue.length
+            && fieldValue.every((item, index) => equal(item, selectorValue[index]));
+        }
+
+        return Object.keys(selectorValue).every((operator) => {
+          const operatorValue = selectorValue[operator];
+
+          switch (operator) {
+            case '$eq':
+              return equal(fieldValue, operatorValue);
+
+            case '$ne':
+              return !equal(fieldValue, operatorValue);
+
+            case '$lt':
+              return fieldValue < operatorValue;
+
+            case '$gt':
+              return fieldValue > operatorValue;
+
+            case '$lte':
+              return fieldValue <= operatorValue;
+
+            case '$gte':
+              return fieldValue >= operatorValue;
+
+            case '$exists':
+              return operatorValue
+                ? typeof fieldValue !== 'undefined'
+                : typeof fieldValue === 'undefined';
+
+            case '$type':
+              return getCouchType(fieldValue) === operatorValue;
+
+            case '$in':
+              return fieldValue instanceof Array
+                && operatorValue instanceof Array
+                && operatorValue.some((item) => fieldValue.includes(item));
+
+            case '$nin':
+              return fieldValue instanceof Array
+                && operatorValue instanceof Array
+                && operatorValue.some((item) => !fieldValue.includes(item));
+
+            case '$size':
+              return fieldValue instanceof Array && fieldValue.length === operatorValue;
+
+            case '$mod': {
+              const [divisor, remainder] = operatorValue;
+
+              if (typeof divisor !== 'number' || typeof remainder !== 'number') {
+                return false;
               }
+
+              return fieldValue % divisor === remainder;
             }
+
+            case '$regex':
+              return new RegExp(operatorValue).test(`${fieldValue}`);
           }
 
-          return false;
+          throw new Error('Invalid operator');
         });
-      })
+      }))
       .slice(skip, skip + limit);
 
     if (fields.length) {
-      docs = docs.map((item) => {
-        const outItem = {};
+      result.docs = result.docs.map((item) => {
+        const outItem = {} as any;
 
         fields.forEach((path) => dotProp.set(outItem, path, dotProp.get(item, path)));
 
@@ -435,15 +518,16 @@ export default class FakeDatabase implements IFakeCouch.Database {
       });
     }
 
-    return {
-      docs,
-      execution_stats: {
+    if (execution_stats) {
+      result.execution_stats = {
         total_keys_examined: 0,
         total_docs_examined: items.length,
         total_quorum_docs_examined: 0,
-        results_returned: docs.length,
-        execution_time_ms: 5.52
-      }
-    };
+        results_returned: result.docs.length,
+        execution_time_ms: process.hrtime(startTime)[1] / 1000000
+      };
+    }
+
+    return result;
   }
 }
