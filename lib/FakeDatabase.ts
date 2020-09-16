@@ -553,6 +553,18 @@ export default class FakeDatabase implements IFakeCouch.Database {
           break;
         }
 
+        case '$nor':
+          if (!Array.isArray(selectorValue)) {
+            throw Error('Invalid $nor value');
+          }
+
+          selectorValue.forEach((itemSelector) => {
+            const norResult = this._find(itemSelector, result.docs);
+
+            result.docs = result.docs.filter((item) => !norResult.includes(item));
+          });
+          break;
+
         default:
           result.docs = this._find({ [key]: selectorValue }, result.docs);
       }

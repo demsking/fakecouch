@@ -1086,5 +1086,93 @@ describe('Database', () => {
         ]
       });
     });
+
+    it('$nor with invalid value', () => {
+      const dbname = uuid();
+      const endpoint = `/${dbname}/_find`;
+      const db = couch.addDatabase(dbname);
+      const query = {
+        selector: {
+          $and: [
+            {
+              year: {
+                $gte: 1900
+              },
+            },
+            {
+              year: {
+                $lte: 1910
+              },
+            }
+          ],
+          $nor: { year: 1901 },
+        }
+      };
+
+      db.addDocs([
+        { _id: 'x1899', type: 'posts', year: 1899 },
+        { _id: 'x1900', type: 'posts', year: 1900 },
+        { _id: 'x1901', type: 'posts', year: 1901 },
+        { _id: 'x1902', type: 'pages', year: 1902 },
+        { _id: 'x1903', type: 'pages', year: 1903 },
+        { _id: 'x1904', type: 'posts', year: 1904 },
+        { _id: 'x1905', type: 'posts', year: 1905 },
+        { _id: 'x1907', type: 'posts', year: 1907 },
+        { _id: 'x1910', type: 'posts', year: 1910 },
+        { _id: 'x1911', type: 'posts', year: 1911 },
+      ]);
+
+      return api.post(endpoint).send(query).expect(400);
+    });
+
+    it('$nor', () => {
+      const dbname = uuid();
+      const endpoint = `/${dbname}/_find`;
+      const db = couch.addDatabase(dbname);
+      const query = {
+        selector: {
+          $and: [
+            {
+              year: {
+                $gte: 1900
+              },
+            },
+            {
+              year: {
+                $lte: 1910
+              },
+            }
+          ],
+          $nor: [
+            { year: 1901 },
+            { year: 1905 },
+            { year: 1907 },
+          ]
+        }
+      };
+
+      db.addDocs([
+        { _id: 'x1899', type: 'posts', year: 1899 },
+        { _id: 'x1900', type: 'posts', year: 1900 },
+        { _id: 'x1901', type: 'posts', year: 1901 },
+        { _id: 'x1902', type: 'pages', year: 1902 },
+        { _id: 'x1903', type: 'pages', year: 1903 },
+        { _id: 'x1904', type: 'posts', year: 1904 },
+        { _id: 'x1905', type: 'posts', year: 1905 },
+        { _id: 'x1907', type: 'posts', year: 1907 },
+        { _id: 'x1910', type: 'posts', year: 1910 },
+        { _id: 'x1911', type: 'posts', year: 1911 },
+      ]);
+
+      return api.post(endpoint).send(query).expect(200, {
+        docs: [
+          db.docs.x1900,
+          db.docs.x1902,
+          db.docs.x1903,
+          db.docs.x1904,
+          db.docs.x1910,
+        ]
+      });
+    });
   });
 });
