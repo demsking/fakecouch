@@ -1597,4 +1597,13 @@ describe('Database', () => {
 
     return api.put(endpoint).expect(200, { ok: true });
   });
+
+  it('POST /{db}/_missing_revs', () => {
+    const dbname = uuid();
+    const endpoint = `/${dbname}/_missing_revs`;
+
+    couch.addDatabase(dbname);
+
+    return api.post(endpoint).expect(200);
+  });
 });
