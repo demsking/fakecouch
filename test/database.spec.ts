@@ -1174,5 +1174,55 @@ describe('Database', () => {
         ]
       });
     });
+
+    it('$all with invalid value', () => {
+      const dbname = uuid();
+      const endpoint = `/${dbname}/_find`;
+      const db = couch.addDatabase(dbname);
+      const query = {
+        selector: {
+          genre: {
+            $all: 'Comedy'
+          }
+        }
+      };
+
+      db.addDocs([ ...docs ]);
+
+      return api.post(endpoint).send(query).expect(400);
+    });
+
+    it('$all', () => {
+      const dbname = uuid();
+      const endpoint = `/${dbname}/_find`;
+      const db = couch.addDatabase(dbname);
+      const query = {
+        selector: {
+          genre: {
+            $all: ['Comedy', 'Short']
+          }
+        }
+      };
+
+      db.addDocs([
+        { _id: 'comedy1', type: 'movie', genre: 'Comedy' },
+        { _id: 'short1', type: 'movie', genre: 'Short' },
+        { _id: 'short2', type: 'movie', genre: 'Short' },
+        { _id: 'action1', type: 'movie', genre: 'Action' },
+        { _id: 'action2', type: 'movie', genre: 'Action' },
+        { _id: 'comedy2', type: 'movie', genre: 'Comedy' },
+        { _id: 'short3', type: 'movie', genre: 'Short' },
+      ]);
+
+      return api.post(endpoint).send(query).expect(200, {
+        docs: [
+          db.docs.comedy1,
+          db.docs.short1,
+          db.docs.short2,
+          db.docs.comedy2,
+          db.docs.short3,
+        ]
+      });
+    });
   });
 });

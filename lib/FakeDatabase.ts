@@ -487,6 +487,13 @@ export default class FakeDatabase implements IFakeCouch.Database {
 
           case '$regex':
             return new RegExp(operatorValue).test(`${fieldValue}`);
+
+          case '$all':
+            if (!Array.isArray(operatorValue)) {
+              throw Error('Invalid $all value');
+            }
+
+            return operatorValue.includes(fieldValue);
         }
 
         throw new Error('Invalid operator');
