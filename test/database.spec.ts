@@ -1477,4 +1477,13 @@ describe('Database', () => {
 
     return api.get(endpoint).expect(501, 'Not Yet Implemented');
   });
+
+  it('POST /{db}/_compact', () => {
+    const dbname = uuid();
+    const endpoint = `/${dbname}/_compact`;
+
+    couch.addDatabase(dbname);
+
+    return api.post(endpoint).expect(202, { ok: true });
+  });
 });
