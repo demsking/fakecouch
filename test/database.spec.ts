@@ -1655,10 +1655,16 @@ describe('Database', () => {
     const endpoint = `/${dbname}/_revs_limit`;
     const db = couch.addDatabase(dbname);
 
-    return api.put(endpoint)
-      .set('Content-Type', 'application/json')
-      .send('2000')
-      .expect(200, { ok: true })
-      .then(() => expect(db.revisionLimit).toBe(2000));
+    return Promise.all([
+      api.put(endpoint)
+        .set('Content-Type', 'application/json')
+        .send('2000')
+        .expect(200, { ok: true })
+        .then(() => expect(db.revisionLimit).toBe(2000)),
+      api.put(endpoint)
+        .set('Content-Type', 'application/json')
+        .send('"invalid data"')
+        .expect(400, 'Invalid JSON data'),
+    ]);
   });
 });
