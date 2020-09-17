@@ -25,6 +25,7 @@ module.exports = {
     }
   },
   rules: {
+    'camelcase': 'off',
     'import/no-unresolved': 'error',
     'import/extensions': 'off',
     'no-underscore-dangle': 'off',

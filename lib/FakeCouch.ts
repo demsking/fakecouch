@@ -863,7 +863,7 @@ export default class FakeCouchServer implements IFakeCouch.Server {
           rev: doc._rev
         }));
 
-        db.buildIndexes();
+        db.buildDesignIndexes();
 
         return [
           201,
@@ -887,9 +887,29 @@ export default class FakeCouchServer implements IFakeCouch.Server {
       }))
       /**
        * POST /{db}/_index
-       * @see https://docs.couchdb.org/en/latest/api/database/find.html#db-index
+       * @see https://docs.couchdb.org/en/latest/api/database/find.html#post--db-_index
        */
       .post('/:dbname/_index', (req) => this.handleDatabaseRequest(req, (db) => {
+        if (!req.body.index) {
+          return [400];
+        }
+
+        const index = db.addIndex(req.body);
+
+        return [
+          200,
+          {
+            result: 'created',
+            id: index.ddoc,
+            name: index.name
+          }
+        ];
+      }))
+      /**
+       * GET /{db}/_index
+       * @see https://docs.couchdb.org/en/latest/api/database/find.html#get--db-_index
+       */
+      .get('/:dbname/_index', (req) => this.handleDatabaseRequest(req, (db) => {
         if (!req.body.index) {
           return [400];
         }

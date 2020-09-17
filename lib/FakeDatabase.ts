@@ -21,83 +21,6 @@ type LocalViewItem = {
   doc?: IFakeCouch.DocumentRef;
 };
 
-interface Selector extends CombinationOperators {
-  [field: string]: Selector | Selector[] | ConditionOperators | any;
-}
-
-interface CombinationOperators {
-  /** Matches if all the selectors in the array match. */
-  $and?: Selector[];
-
-  /** Matches if any of the selectors in the array match. All selectors must use the same index. */
-  $or?: Selector[];
-
-  /** Matches if the given selector does not match. */
-  $not?: Selector;
-
-  /** Matches if none of the selectors in the array match. */
-  $nor?: Selector[];
-}
-
-interface ConditionOperators {
-  /** Match fields 'less than' this one. */
-  $lt?: any;
-
-  /** Match fields 'greater than' this one. */
-  $gt?: any;
-
-  /** Match fields 'less than or equal to' this one. */
-  $lte?: any;
-
-  /** Match fields 'greater than or equal to' this one. */
-  $gte?: any;
-
-  /** Match fields equal to this one. */
-  $eq?: any;
-
-  /** Match fields not equal to this one. */
-  $ne?: any;
-
-  /** True if the field should exist, false otherwise. */
-  $exists?: boolean;
-
-  /** One of: 'null', 'boolean', 'number', 'string', 'array', or 'object'. */
-  $type?: 'null' | 'boolean' | 'number' | 'string' | 'array' | 'object';
-
-  /** The document field must exist in the list provided. */
-  $in?: any[];
-
-  /** The document field must not exist in the list provided. */
-  $nin?: any[];
-
-  /**
-   * Special condition to match the length of an array field in a document.
-   * Non-array fields cannot match this condition.
-   */
-  $size?: number;
-
-  /**
-   * Divisor and Remainder are both positive or negative integers.
-   * Non-integer values result in a 404 status.
-   * Matches documents where (field % Divisor == Remainder) is true,
-   * and only when the document field is an integer.
-   * [divisor, remainder]
-   */
-  $mod?: [number, number];
-
-  /**
-   * A regular expression pattern to match against the document field.
-   * Only matches when the field is a string value and matches the supplied
-   * regular expression.
-   */
-  $regex?: string;
-
-  /** Matches an array value if it contains all the elements of the argument array. */
-  $all?: any[];
-
-  $elemMatch?: ConditionOperators;
-}
-
 interface GenericRequest {
   /**
    * Defines a list of fields that you want to receive.
@@ -120,7 +43,7 @@ interface GenericRequest {
 
 interface QueryRequest extends GenericRequest {
   /** Defines a selector to filter the results. Required */
-  selector: Selector;
+  selector: IFakeCouch.Selector;
   execution_stats?: boolean;
   sort?: Record<string, 'asc' | 'desc'>[];
 }
@@ -192,7 +115,21 @@ export default class FakeDatabase implements IFakeCouch.Database {
   readonly localDocs: Record<string, IFakeCouch.DocumentRef> = {};
   readonly designs: Record<string, IFakeCouch.DocumentRef> = {};
   readonly storage: Record<string, Record<string, LocalView>> = {};
-  readonly indexes: Record<string, Function> = {};
+  readonly designIndexes: Record<string, Function> = {};
+  readonly indexes: IFakeCouch.IndexDefinition[] = [
+    {
+      ddoc: null,
+      name: '_all_docs',
+      type: 'special',
+      def: {
+        fields: [
+          {
+            _id: 'asc'
+          }
+        ]
+      }
+    }
+  ];
 
   readonly security: Record<string, any> = {
     admins: {
@@ -208,124 +145,6 @@ export default class FakeDatabase implements IFakeCouch.Database {
   constructor(name: string) {
     this.name = name;
     this.info.db_name = name;
-  }
-
-  _addDoc(body: Record<string, any>, docid?: string): IFakeCouch.DocumentRef {
-    const doc = { ...body };
-
-    if (!doc._id) {
-      doc._id = docid || uuid();
-    }
-
-    if (doc._id.startsWith('_local/')) {
-      doc._rev = '1-1';
-
-      this.localDocs[doc._id] = doc as any;
-    } else {
-      doc._rev = `1-${uuid()}`;
-      this.docs[doc._id] = doc as any;
-
-      if (doc._deleted) {
-        this.info.doc_del_count++;
-      } else {
-        this.info.doc_count++;
-      }
-    }
-
-    return doc as any;
-  }
-
-  addDoc(doc: IFakeCouch.Document, docid?: string): IFakeCouch.DocumentRef {
-    const ref = this._addDoc(doc, docid);
-
-    this.buildIndexes();
-
-    return ref;
-  }
-
-  addDocs(docs: IFakeCouch.Document[]): void {
-    docs.forEach((doc) => this._addDoc(doc));
-    this.buildIndexes();
-  }
-
-  addDesign(ddoc: IFakeCouch.DesignDocument): IFakeCouch.DocumentRef {
-    const doc = ddoc as Required<IFakeCouch.Document>;
-
-    doc._rev = `1-${uuid()}`;
-
-    this.designs[doc._id] = doc as any;
-    this.storage[doc._id] = {};
-
-    const views = this.storage[doc._id];
-
-    for (const name in doc.views) {
-      views[name] = {
-        items: [],
-        mapper: eval(doc.views[name].map),
-        reduce: 0,
-        reducer: doc.views[name].reduce
-      };
-    }
-
-    function resetViews() {
-      for (const name in doc.views) {
-        views[name].items.splice(0);
-
-        views[name].reduce = 0;
-      }
-    }
-
-    this.indexes[doc._id] = () => {
-      resetViews();
-
-      const rows = Object.values(this.docs);
-
-      for (const name in doc.views) {
-        const view = views[name];
-
-        rows.forEach((doc) => {
-          (global as any).emit = (key: any, value: any) => {
-            view.items.push({ id: doc._id, key, value, doc });
-
-            if (view.reducer === '_sum') {
-              view.reduce += Number.parseInt(value, 10) || 0;
-            }
-
-            return false;
-          };
-
-          view.mapper(doc);
-
-          if (view.reducer === '_count') {
-            view.reduce = view.items.length;
-          }
-        });
-      }
-    };
-
-    this.indexes[doc._id]();
-
-    return doc as any;
-  }
-
-  hasDesign(ddocid: string): boolean {
-    return this.designs.hasOwnProperty(ddocid);
-  }
-
-  hasDesignView(ddocid: string, viewname: string): boolean {
-    return this.designs.hasOwnProperty(ddocid) && this.storage[ddocid].hasOwnProperty(viewname);
-  }
-
-  getDesignView(ddocid: string, viewname: string, request: FindByViewRequest = {}): any {
-    if (this.designs.hasOwnProperty(ddocid)) {
-      const views = this.storage[ddocid];
-      const view = views[viewname];
-      const items: Row[] = view.items.slice(0) as any;
-
-      return FakeDatabase.parseDesignViewItems(items, request, view);
-    }
-
-    return null;
   }
 
   static parseDesignViewItems(items: LocalViewItem[], request: FindByViewRequest = {}, view?: LocalView): any {
@@ -399,16 +218,147 @@ export default class FakeDatabase implements IFakeCouch.Database {
     };
   }
 
-  buildIndexes(): void {
-    for (const id in this.indexes) {
-      this.indexes[id]();
+  _addDoc(body: Record<string, any>, docid?: string): IFakeCouch.DocumentRef {
+    const doc = { ...body };
+
+    if (!doc._id) {
+      doc._id = docid || uuid();
+    }
+
+    if (doc._id.startsWith('_local/')) {
+      doc._rev = '1-1';
+
+      this.localDocs[doc._id] = doc as any;
+    } else {
+      doc._rev = `1-${uuid()}`;
+      this.docs[doc._id] = doc as any;
+
+      if (doc._deleted) {
+        this.info.doc_del_count++;
+      } else {
+        this.info.doc_count++;
+      }
+    }
+
+    return doc as any;
+  }
+
+  addDoc(doc: IFakeCouch.Document, docid?: string): IFakeCouch.DocumentRef {
+    const ref = this._addDoc(doc, docid);
+
+    this.buildDesignIndexes();
+
+    return ref;
+  }
+
+  addDocs(docs: IFakeCouch.Document[]): void {
+    docs.forEach((doc) => this._addDoc(doc));
+    this.buildDesignIndexes();
+  }
+
+  addIndex(index: IFakeCouch.Index): IFakeCouch.IndexDefinition {
+    const indexDefinition: IFakeCouch.IndexDefinition = {
+      ddoc: `_design/${index.ddoc || uuid()}`,
+      name: index.name || uuid(),
+      type: index.type || 'json',
+      def: index.index
+    };
+
+    this.indexes.push(indexDefinition);
+
+    return indexDefinition;
+  }
+
+  addDesign(ddoc: IFakeCouch.DesignDocument): IFakeCouch.DocumentRef {
+    const doc = ddoc as Required<IFakeCouch.Document>;
+
+    doc._rev = `1-${uuid()}`;
+
+    this.designs[doc._id] = doc as any;
+    this.storage[doc._id] = {};
+
+    const views = this.storage[doc._id];
+
+    for (const name in doc.views) {
+      views[name] = {
+        items: [],
+        mapper: eval(doc.views[name].map),
+        reduce: 0,
+        reducer: doc.views[name].reduce
+      };
+    }
+
+    function resetViews() {
+      for (const name in doc.views) {
+        views[name].items.splice(0);
+
+        views[name].reduce = 0;
+      }
+    }
+
+    this.designIndexes[doc._id] = () => {
+      resetViews();
+
+      const rows = Object.values(this.docs);
+
+      for (const name in doc.views) {
+        const view = views[name];
+
+        rows.forEach((doc) => {
+          (global as any).emit = (key: any, value: any) => {
+            view.items.push({ id: doc._id, key, value, doc });
+
+            if (view.reducer === '_sum') {
+              view.reduce += Number.parseInt(value, 10) || 0;
+            }
+
+            return false;
+          };
+
+          view.mapper(doc);
+
+          if (view.reducer === '_count') {
+            view.reduce = view.items.length;
+          }
+        });
+      }
+    };
+
+    this.designIndexes[doc._id]();
+
+    return doc as any;
+  }
+
+  hasDesign(ddocid: string): boolean {
+    return this.designs.hasOwnProperty(ddocid);
+  }
+
+  hasDesignView(ddocid: string, viewname: string): boolean {
+    return this.designs.hasOwnProperty(ddocid) && this.storage[ddocid].hasOwnProperty(viewname);
+  }
+
+  getDesignView(ddocid: string, viewname: string, request: FindByViewRequest = {}): any {
+    if (this.designs.hasOwnProperty(ddocid)) {
+      const views = this.storage[ddocid];
+      const view = views[viewname];
+      const items: Row[] = view.items.slice(0) as any;
+
+      return FakeDatabase.parseDesignViewItems(items, request, view);
+    }
+
+    return null;
+  }
+
+  buildDesignIndexes(): void {
+    for (const id in this.designIndexes) {
+      this.designIndexes[id]();
     }
   }
 
   deleteDesign(ddocid: string): void {
     delete this.storage[ddocid];
     delete this.designs[ddocid];
-    delete this.indexes[ddocid];
+    delete this.designIndexes[ddocid];
   }
 
   _findFilter(fieldValue: any, selectorValue: any): boolean {
@@ -508,7 +458,7 @@ export default class FakeDatabase implements IFakeCouch.Database {
     });
   }
 
-  _find(selector: Selector, items: IFakeCouch.DocumentRef[]): IFakeCouch.DocumentRef[] {
+  _find(selector: IFakeCouch.Selector, items: IFakeCouch.DocumentRef[]): IFakeCouch.DocumentRef[] {
     const paths = Object.keys(selector);
 
     return items.filter((item) => paths.every((path) => {
