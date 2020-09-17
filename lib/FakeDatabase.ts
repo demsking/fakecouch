@@ -274,6 +274,18 @@ export default class FakeDatabase implements IFakeCouch.Database {
     return indexDefinition;
   }
 
+  deleteIndex(ddoc: string, indexName: string): boolean {
+    const pos = this.indexes.findIndex((index) => index.ddoc === ddoc && index.name === indexName);
+
+    if (pos > -1) {
+      this.indexes.splice(pos, 1);
+
+      return true;
+    }
+
+    return false;
+  }
+
   addDesign(ddoc: IFakeCouch.DesignDocument): IFakeCouch.DocumentRef {
     const doc = ddoc as Required<IFakeCouch.Document>;
 

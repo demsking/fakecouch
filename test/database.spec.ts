@@ -1397,6 +1397,26 @@ describe('Database', () => {
     });
   });
 
+  it('DELETE /{db}/_index/{designdoc}/json/{name}', () => {
+    const dbname = uuid();
+    const db = couch.addDatabase(dbname);
+
+    db.addIndex({
+      ddoc: 'nameindex',
+      name: 'nameindex',
+      partitioned: true,
+      index: {
+        fields: ['name']
+      }
+    });
+
+    return Promise.all([
+      api.delete(`/${dbname}/_index/_design/404/json/nameindex`).expect(404, 'Index not found'),
+      api.delete(`/${dbname}/_index/_design/nameindex/json/404`).expect(404, 'Index not found'),
+      api.delete(`/${dbname}/_index/_design/nameindex/json/nameindex`).expect(200, { ok: true }),
+    ]);
+  });
+
   it('POST /{db}/_explain', () => {
     const dbname = uuid();
     const endpoint = `/${dbname}/_explain`;

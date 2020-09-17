@@ -919,6 +919,15 @@ export default class FakeCouchServer implements IFakeCouch.Server {
         ];
       }))
       /**
+       * DELETE /{db}/_index/{designdoc}/json/{name}
+       * @see https://docs.couchdb.org/en/latest/api/database/find.html#delete--db-_index-designdoc-json-name
+       */
+      .delete('/:dbname/_index/_design/:ddoc/json/:indexName', (req) => this.handleDatabaseRequest(req, (db) => {
+        return db.deleteIndex(`_design/${req.params.ddoc}`, req.params.indexName)
+          ? [200, { ok: true }]
+          : [404, 'Index not found'];
+      }))
+      /**
        * POST /{db}/_explain
        * @see https://docs.couchdb.org/en/latest/api/database/find.html#db-explain
        */

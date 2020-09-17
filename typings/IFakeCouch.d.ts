@@ -158,7 +158,10 @@ export namespace IFakeCouch {
 
     addDoc(doc: Document, docid?: string): DocumentRef;
     addDocs(docs: Document[]): void;
+
     addIndex(index: Index): IndexDefinition;
+    deleteIndex(ddoc: string, indexName: string): boolean;
+
     addDesign(ddoc: IFakeCouch.DesignDocument): DocumentRef;
     hasDesign(ddocid: string): boolean;
     deleteDesign(ddocid: string): void;
