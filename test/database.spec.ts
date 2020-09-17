@@ -1518,4 +1518,13 @@ describe('Database', () => {
       instance_start_time: '0'
     });
   });
+
+  it('POST /{db}/_view_cleanup', () => {
+    const dbname = uuid();
+    const endpoint = `/${dbname}/_view_cleanup`;
+
+    couch.addDatabase(dbname);
+
+    return api.post(endpoint).expect(202, { ok: true });
+  });
 });
