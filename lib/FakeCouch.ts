@@ -643,21 +643,31 @@ export default class FakeCouchServer implements IFakeCouch.Server {
       });
   }
 
-  handleDatabaseRequest(req: Request, handler: (db: FakeDatabase) => IFakeCouch.ReplyFunctionReturns, errorCore = 404): IFakeCouch.ReplyFunctionReturns {
+  handleDatabaseRequest(req: Request, handler: (db: FakeDatabase) => IFakeCouch.ReplyFunctionReturns, errorCore = 400): IFakeCouch.ReplyFunctionReturns {
     if (this.databases.hasOwnProperty(req.params.dbname)) {
       const db = this.databases[req.params.dbname];
 
       return handler(db);
     }
 
-    if (errorCore === 404) {
-      return [
-        404,
-        {
-          error: 'not_found',
-          reason: 'Database does not exist.'
-        }
-      ];
+    switch (errorCore) {
+      case 400:
+        return [
+          400,
+          {
+            error: 'bad_request',
+            reason: 'Invalid database name'
+          }
+        ];
+
+      case 404:
+        return [
+          404,
+          {
+            error: 'not_found',
+            reason: 'Database does not exist.'
+          }
+        ];
     }
 
     return [errorCore];
@@ -669,12 +679,12 @@ export default class FakeCouchServer implements IFakeCouch.Server {
        * HEAD /{db}
        * @see https://docs.couchdb.org/en/latest/api/database/common.html#head--db
        */
-      .head('/:dbname', (req) => this.handleDatabaseRequest(req, (db) => [200]))
+      .head('/:dbname', (req) => this.handleDatabaseRequest(req, (db) => [200], 404))
       /**
        * GET /{db}
        * @see https://docs.couchdb.org/en/latest/api/database/common.html#get--db
        */
-      .get('/:dbname', (req) => this.handleDatabaseRequest(req, (db) => [200, db.info]))
+      .get('/:dbname', (req) => this.handleDatabaseRequest(req, (db) => [200, db.info], 404))
       /**
        * PUT /{db}
        * @see https://docs.couchdb.org/en/latest/api/database/common.html#put--db
@@ -708,7 +718,7 @@ export default class FakeCouchServer implements IFakeCouch.Server {
           200,
           { ok: true }
         ];
-      }))
+      }, 404))
       /**
        * POST /{db}
        * @see https://docs.couchdb.org/en/latest/api/database/common.html#post--db
@@ -997,7 +1007,7 @@ export default class FakeCouchServer implements IFakeCouch.Server {
         return db.hasDesign(`_design/${req.params.ddoc}`)
           ? [202, { ok: true }]
           : [404, 'Design document not found'];
-      }, 400))
+      }))
       /**
        * POST /{db}/_ensure_full_commit
        * @see https://docs.couchdb.org/en/latest/api/database/compact.html#db-ensure-full-commit
@@ -1048,7 +1058,7 @@ export default class FakeCouchServer implements IFakeCouch.Server {
           201,
           result
         ];
-      }, 400))
+      }))
       /**
        * GET /{db}/_purged_infos_limit
        * @see https://docs.couchdb.org/en/latest/api/database/misc.html#get--db-_purged_infos_limit
