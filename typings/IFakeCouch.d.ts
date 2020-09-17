@@ -129,7 +129,7 @@ export namespace IFakeCouch {
 
   export type Index = {
     index: {
-      fields: string[] | Record<string, 'asc' | 'desc'>[];
+      fields: (string | Record<string, 'asc' | 'desc'>)[];
       partial_filter_selector?: Selector;
     };
     ddoc?: string;
@@ -143,8 +143,9 @@ export namespace IFakeCouch {
     ddoc: string | null;
     name: string;
     type: 'special' | 'json' | 'text';
+    partitioned?: boolean;
     def: {
-      fields: string[] | Record<string, 'asc' | 'desc'>[];
+      fields: (string | Record<string, 'asc' | 'desc'>)[];
       partial_filter_selector?: Selector;
     };
   };
