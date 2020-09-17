@@ -1615,4 +1615,13 @@ describe('Database', () => {
 
     return api.post(endpoint).expect(501, 'Not Yet Implemented');
   });
+
+  it('GET /{db}/_revs_limit', () => {
+    const dbname = uuid();
+    const endpoint = `/${dbname}/_revs_limit`;
+
+    couch.addDatabase(dbname);
+
+    return api.get(endpoint).expect(200, '1000');
+  });
 });

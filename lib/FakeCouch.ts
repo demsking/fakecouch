@@ -1108,7 +1108,7 @@ export default class FakeCouchServer implements IFakeCouch.Server {
        * PUT /{db}/_revs_limit
        * @see https://docs.couchdb.org/en/latest/api/database/misc.html#put--db-_revs_limit
        */
-      .get('/:dbname/_revs_limit', (req) => this.handleDatabaseRequest(req, (db) => [200, { ok: true }]))
+      .put('/:dbname/_revs_limit', (req) => this.handleDatabaseRequest(req, (db) => [200, { ok: true }]))
       /**
        * GET /{db}/_local_docs
        * @see https://docs.couchdb.org/en/latest/api/local.html#get--db-_local_docs
