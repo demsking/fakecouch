@@ -1358,4 +1358,22 @@ describe('Database', () => {
 
     return api.post(endpoint).expect(501, 'Not Yet Implemented');
   });
+
+  it('GET /{db}/_shards', () => {
+    const dbname = uuid();
+    const endpoint = `/${dbname}/_shards`;
+
+    couch.addDatabase(dbname);
+
+    return api.get(endpoint).expect(200, {
+      shards: {
+        '00000000-1fffffff': [
+          'couchdb@node1.example.com'
+        ],
+        '20000000-3fffffff': [
+          'couchdb@node1.example.com'
+        ]
+      }
+    });
+  });
 });
