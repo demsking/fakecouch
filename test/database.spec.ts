@@ -1506,4 +1506,16 @@ describe('Database', () => {
       api.post(`/${dbname}/_compact/posts`).expect(202, { ok: true }),
     ]);
   });
+
+  it('POST /{db}/_ensure_full_commit', () => {
+    const dbname = uuid();
+    const endpoint = `/${dbname}/_ensure_full_commit`;
+
+    couch.addDatabase(dbname);
+
+    return api.post(endpoint).expect(201, {
+      ok: true,
+      instance_start_time: '0'
+    });
+  });
 });

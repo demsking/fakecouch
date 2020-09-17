@@ -1002,7 +1002,7 @@ export default class FakeCouchServer implements IFakeCouch.Server {
        * POST /{db}/_ensure_full_commit
        * @see https://docs.couchdb.org/en/latest/api/database/compact.html#db-ensure-full-commit
        */
-      .post('/:dbname/_ensure_full_commit', (req) => this.handleDatabaseRequest(req, (db) => [202, {
+      .post('/:dbname/_ensure_full_commit', (req) => this.handleDatabaseRequest(req, (db) => [201, {
         ok: true,
         instance_start_time: '0'
       }]))
