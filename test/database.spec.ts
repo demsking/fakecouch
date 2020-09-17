@@ -1349,4 +1349,13 @@ describe('Database', () => {
         expect(typeof body.name).toBe('string');
       });
   });
+
+  it('POST /{db}/_explain', () => {
+    const dbname = uuid();
+    const endpoint = `/${dbname}/_explain`;
+
+    couch.addDatabase(dbname);
+
+    return api.post(endpoint).expect(501, 'Not Yet Implemented');
+  });
 });
