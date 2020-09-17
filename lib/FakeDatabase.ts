@@ -261,7 +261,6 @@ export default class FakeDatabase implements IFakeCouch.Database {
       ddoc: `_design/${index.ddoc || uuid()}`,
       name: index.name || uuid(),
       type: index.type || 'json',
-      partitioned: index.partitioned,
       def: {
         fields: index.index.fields.map((item) => {
           return typeof item === 'string' ? { [item]: 'asc' } : item;

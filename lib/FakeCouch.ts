@@ -910,16 +910,11 @@ export default class FakeCouchServer implements IFakeCouch.Server {
        * @see https://docs.couchdb.org/en/latest/api/database/find.html#get--db-_index
        */
       .get('/:dbname/_index', (req) => this.handleDatabaseRequest(req, (db) => {
-        if (!req.body.index) {
-          return [400];
-        }
-
         return [
           200,
           {
-            result: 'created',
-            id: `_design/${req.body.ddoc || uuid()}`,
-            name: req.body.name || uuid()
+            total_rows: db.indexes.length,
+            indexes: db.indexes
           }
         ];
       }))

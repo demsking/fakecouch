@@ -1323,12 +1323,14 @@ describe('Database', () => {
     const payload1 = {
       ddoc: 'nameindex',
       name: 'nameindex',
+      partitioned: true,
       index: {
         fields: ['name']
       }
     };
 
     const payload2 = {
+      partitioned: true,
       index: {
         fields: ['name']
       }
@@ -1348,6 +1350,51 @@ describe('Database', () => {
         expect(typeof body.id).toBe('string');
         expect(typeof body.name).toBe('string');
       });
+  });
+
+  it('GET /{db}/_index', () => {
+    const dbname = uuid();
+    const endpoint = `/${dbname}/_index`;
+    const db = couch.addDatabase(dbname);
+
+    db.addIndex({
+      ddoc: 'nameindex',
+      name: 'nameindex',
+      partitioned: true,
+      index: {
+        fields: ['name']
+      }
+    });
+
+    return api.get(endpoint).expect(200, {
+      total_rows: 2,
+      indexes: [
+        {
+          ddoc: null,
+          name: '_all_docs',
+          type: 'special',
+          def: {
+            fields: [
+              {
+                _id: 'asc'
+              }
+            ]
+          }
+        },
+        {
+          ddoc: '_design/nameindex',
+          name: 'nameindex',
+          type: 'json',
+          def: {
+            fields: [
+              {
+                name: 'asc'
+              }
+            ]
+          }
+        }
+      ]
+    });
   });
 
   it('POST /{db}/_explain', () => {
