@@ -496,6 +496,10 @@ export default class FakeDatabase implements IFakeCouch.Database {
         case '$allMatch':
           return fieldValue instanceof Array
             && fieldValue.every((fieldItem) => this._findFilter(fieldItem, operatorValue));
+
+        case '$keyMapMatch':
+          return typeof fieldValue === 'object' && !Array.isArray(fieldValue)
+            && Object.keys(fieldValue).some((fieldKey) => this._findFilter(fieldKey, operatorValue));
       }
 
       throw new Error('Invalid operator');

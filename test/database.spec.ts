@@ -1284,5 +1284,35 @@ describe('Database', () => {
         ]
       });
     });
+
+    it('$keyMapMatch', () => {
+      const dbname = uuid();
+      const endpoint = `/${dbname}/_find`;
+      const db = couch.addDatabase(dbname);
+      const query = {
+        selector: {
+          cameras: {
+            $keyMapMatch: {
+              $eq: 'secondary'
+            }
+          }
+        }
+      };
+
+      db.addDocs([
+        { _id: 'x001', type: 'movie', cameras: { primary: 1 } },
+        { _id: 'x010', type: 'movie', cameras: { primary: 1 } },
+        { _id: 'x011', type: 'movie', cameras: { primary: 1, secondary: 2 } },
+        { _id: 'x100', type: 'movie', cameras: { primary: 1, secondary: 2 } },
+        { _id: 'x101', type: 'movie', cameras: { primary: 1 } },
+      ]);
+
+      return api.post(endpoint).send(query).expect(200, {
+        docs: [
+          db.docs.x011,
+          db.docs.x100,
+        ]
+      });
+    });
   });
 });
