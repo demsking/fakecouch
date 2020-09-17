@@ -1035,7 +1035,7 @@ export default class FakeCouchServer implements IFakeCouch.Server {
       .post('/:dbname/_purge', (req) => this.handleDatabaseRequest(req, (db) => {
         const result = {
           purge_seq: null,
-          purged: {} as any
+          purged: {} as Record<string, any>
         };
 
         for (const _id in req.body) {
@@ -1048,7 +1048,7 @@ export default class FakeCouchServer implements IFakeCouch.Server {
           201,
           result
         ];
-      }))
+      }, 400))
       /**
        * GET /{db}/_purged_infos_limit
        * @see https://docs.couchdb.org/en/latest/api/database/misc.html#get--db-_purged_infos_limit

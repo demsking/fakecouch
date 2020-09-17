@@ -1570,4 +1570,13 @@ describe('Database', () => {
       .expect(200, { ok: true })
       .then(() => expect(db.security).toEqual(securityObject));
   });
+
+  it('POST /{db}/_purge', () => {
+    const dbname = uuid();
+    const endpoint = `/${dbname}/_purge`;
+
+    couch.addDatabase(dbname);
+
+    return api.post(endpoint).expect(201);
+  });
 });
