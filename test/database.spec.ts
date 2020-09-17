@@ -1401,4 +1401,13 @@ describe('Database', () => {
       ok: true
     });
   });
+
+  it('GET /{db}/_changes', () => {
+    const dbname = uuid();
+    const endpoint = `/${dbname}/_changes`;
+
+    couch.addDatabase(dbname);
+
+    return api.get(endpoint).expect(501, 'Not Yet Implemented');
+  });
 });
