@@ -1574,10 +1574,23 @@ describe('Database', () => {
   it('POST /{db}/_purge', () => {
     const dbname = uuid();
     const endpoint = `/${dbname}/_purge`;
+    const payload = {
+      doc01: [
+        '1-b06fcd1c1c9e0ec7c480ee8aa467bf3b',
+        '2-c50a32451890a3f1c3e423334cc92745'
+      ]
+    };
 
     couch.addDatabase(dbname);
 
-    return api.post(endpoint).expect(201);
+    return api.post(endpoint).send(payload).expect(201, {
+      purge_seq: null,
+      purged: {
+        doc01: [
+          '2-c50a32451890a3f1c3e423334cc92745'
+        ]
+      }
+    });
   });
 
   it('GET /{db}/_purged_infos_limit', () => {
@@ -1601,10 +1614,22 @@ describe('Database', () => {
   it('POST /{db}/_missing_revs', () => {
     const dbname = uuid();
     const endpoint = `/${dbname}/_missing_revs`;
+    const payload = {
+      doc01: [
+        '1-b06fcd1c1c9e0ec7c480ee8aa467bf3b',
+        '2-c50a32451890a3f1c3e423334cc92745'
+      ]
+    };
 
     couch.addDatabase(dbname);
 
-    return api.post(endpoint).expect(200);
+    return api.post(endpoint).send(payload).expect(200, {
+      missing_revs: {
+        doc01: [
+          '1-b06fcd1c1c9e0ec7c480ee8aa467bf3b'
+        ]
+      }
+    });
   });
 
   it('POST /{db}/_revs_diff', () => {
@@ -1623,5 +1648,17 @@ describe('Database', () => {
     couch.addDatabase(dbname);
 
     return api.get(endpoint).expect(200, '1000');
+  });
+
+  it('PUT /{db}/_revs_limit', () => {
+    const dbname = uuid();
+    const endpoint = `/${dbname}/_revs_limit`;
+    const db = couch.addDatabase(dbname);
+
+    return api.put(endpoint)
+      .set('Content-Type', 'application/json')
+      .send('2000')
+      .expect(200, { ok: true })
+      .then(() => expect(db.revisionLimit).toBe(2000));
   });
 });

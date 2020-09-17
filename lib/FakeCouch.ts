@@ -91,7 +91,7 @@ export default class FakeCouchServer implements IFakeCouch.Server {
       if (hander instanceof Array) {
         middlewares.push(...hander);
       } else {
-        middlewares.push(bodyParser.json());
+        middlewares.push(bodyParser.json({ strict: false }));
 
         if (typeof hander === 'function') {
           middlewares.unshift(auth);
@@ -1103,12 +1103,25 @@ export default class FakeCouchServer implements IFakeCouch.Server {
        * GET /{db}/_revs_limit
        * @see https://docs.couchdb.org/en/latest/api/database/misc.html#db-revs-limit
        */
-      .get('/:dbname/_revs_limit', (req) => this.handleDatabaseRequest(req, (db) => [200, '1000']))
+      .get('/:dbname/_revs_limit', (req) => this.handleDatabaseRequest(req, (db) => [
+        200,
+        `${db.revisionLimit}`
+      ]))
       /**
        * PUT /{db}/_revs_limit
        * @see https://docs.couchdb.org/en/latest/api/database/misc.html#put--db-_revs_limit
        */
-      .put('/:dbname/_revs_limit', (req) => this.handleDatabaseRequest(req, (db) => [200, { ok: true }]))
+      .put('/:dbname/_revs_limit', (req) => this.handleDatabaseRequest(req, (db) => {
+        const value = Number.parseInt(req.body, 10);
+
+        if (Number.isNaN(value)) {
+          return [400, 'Invalid JSON data'];
+        }
+
+        db.revisionLimit = value;
+
+        return [200, { ok: true }];
+      }))
       /**
        * GET /{db}/_local_docs
        * @see https://docs.couchdb.org/en/latest/api/local.html#get--db-_local_docs

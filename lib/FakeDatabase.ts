@@ -111,6 +111,8 @@ export default class FakeDatabase implements IFakeCouch.Database {
     instance_start_time: '0'
   };
 
+  revisionLimit = 1000;
+
   readonly docs: Record<string, IFakeCouch.DocumentRef> = {};
   readonly localDocs: Record<string, IFakeCouch.DocumentRef> = {};
   readonly designs: Record<string, IFakeCouch.DocumentRef> = {};

@@ -161,6 +161,7 @@ export namespace IFakeCouch {
     readonly designs: Record<string, DocumentRef>;
     readonly indexes: IFakeCouch.IndexDefinition[];
     readonly security: Record<'admins' | 'members', SecurityObject>;
+    revisionLimit: number;
 
     addDoc(doc: Document, docid?: string): DocumentRef;
     addDocs(docs: Document[]): void;
