@@ -149,12 +149,18 @@ export namespace IFakeCouch {
     };
   };
 
+  export type SecurityObject = {
+    names: string[];
+    roles: string[];
+  };
+
   export interface Database {
     readonly name: string;
     readonly docs: Record<string, DocumentRef>;
     readonly localDocs: Record<string, DocumentRef>;
     readonly designs: Record<string, DocumentRef>;
     readonly indexes: IFakeCouch.IndexDefinition[];
+    readonly security: Record<'admins' | 'members', SecurityObject>;
 
     addDoc(doc: Document, docid?: string): DocumentRef;
     addDocs(docs: Document[]): void;

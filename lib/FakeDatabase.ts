@@ -131,14 +131,18 @@ export default class FakeDatabase implements IFakeCouch.Database {
     }
   ];
 
-  readonly security: Record<string, any> = {
+  readonly security: Record<'admins' | 'members', IFakeCouch.SecurityObject> = {
     admins: {
       names: [],
-      roles: []
+      roles: [
+        '_admin'
+      ]
     },
     members: {
       names: [],
-      roles: []
+      roles: [
+        '_admin'
+      ]
     }
   };
 

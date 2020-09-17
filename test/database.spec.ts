@@ -1527,4 +1527,26 @@ describe('Database', () => {
 
     return api.post(endpoint).expect(202, { ok: true });
   });
+
+  it('GET /{db}/_security', () => {
+    const dbname = uuid();
+    const endpoint = `/${dbname}/_security`;
+
+    couch.addDatabase(dbname);
+
+    return api.get(endpoint).expect(200, {
+      admins: {
+        names: [],
+        roles: [
+          '_admin'
+        ]
+      },
+      members: {
+        names: [],
+        roles: [
+          '_admin'
+        ]
+      }
+    });
+  });
 });
