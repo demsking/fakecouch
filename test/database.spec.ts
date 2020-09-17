@@ -1315,4 +1315,38 @@ describe('Database', () => {
       });
     });
   });
+
+  it('POST /{db}/_index', () => {
+    const dbname = uuid();
+    const endpoint = `/${dbname}/_index`;
+
+    const payload1 = {
+      ddoc: 'nameindex',
+      name: 'nameindex',
+      index: {
+        fields: ['name']
+      }
+    };
+
+    const payload2 = {
+      index: {
+        fields: ['name']
+      }
+    };
+
+    couch.addDatabase(dbname);
+
+    return api.post(endpoint).send({}).expect(400)
+      .then(() => api.post(endpoint).send(payload1).expect(200, {
+        result: 'created',
+        id: '_design/nameindex',
+        name: 'nameindex'
+      }))
+      .then(() => api.post(endpoint).send(payload2).expect(200))
+      .then(({ body }) => {
+        expect(body.result).toBe('created');
+        expect(typeof body.id).toBe('string');
+        expect(typeof body.name).toBe('string');
+      });
+  });
 });
