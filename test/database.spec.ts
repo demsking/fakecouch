@@ -1606,4 +1606,13 @@ describe('Database', () => {
 
     return api.post(endpoint).expect(200);
   });
+
+  it('POST /{db}/_revs_diff', () => {
+    const dbname = uuid();
+    const endpoint = `/${dbname}/_revs_diff`;
+
+    couch.addDatabase(dbname);
+
+    return api.post(endpoint).expect(501, 'Not Yet Implemented');
+  });
 });
