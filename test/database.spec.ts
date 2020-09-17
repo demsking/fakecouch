@@ -1390,4 +1390,15 @@ describe('Database', () => {
       ]
     });
   });
+
+  it('POST /{db}/_sync_shards', () => {
+    const dbname = uuid();
+    const endpoint = `/${dbname}/_sync_shards`;
+
+    couch.addDatabase(dbname);
+
+    return api.post(endpoint).expect(200, {
+      ok: true
+    });
+  });
 });
