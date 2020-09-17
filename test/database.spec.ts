@@ -1255,5 +1255,34 @@ describe('Database', () => {
         ]
       });
     });
+
+    it('$allMatch', () => {
+      const dbname = uuid();
+      const endpoint = `/${dbname}/_find`;
+      const db = couch.addDatabase(dbname);
+      const query = {
+        selector: {
+          genre: {
+            $allMatch: {
+              $eq: 'Horror'
+            }
+          }
+        }
+      };
+
+      db.addDocs([
+        { _id: 'x001', type: 'movie', genre: ['Comedy', 'Horror'] },
+        { _id: 'x010', type: 'movie', genre: ['Comedy', 'Short'] },
+        { _id: 'x011', type: 'movie', genre: ['Horror', 'Action'] },
+        { _id: 'x100', type: 'movie', genre: ['Comedy'] },
+        { _id: 'x101', type: 'movie', genre: ['Horror'] },
+      ]);
+
+      return api.post(endpoint).send(query).expect(200, {
+        docs: [
+          db.docs.x101,
+        ]
+      });
+    });
   });
 });
