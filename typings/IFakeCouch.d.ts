@@ -29,6 +29,7 @@ export namespace IFakeCouch {
     post: (path: any, handler: Handler) => Scope;
     put: (path: any, handler: Handler) => Scope;
     delete: (path: any, handler: Handler) => Scope;
+    copy: (path: any, handler: Handler) => Scope;
   };
 
   export type Document = {

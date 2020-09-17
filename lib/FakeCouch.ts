@@ -119,7 +119,8 @@ export default class FakeCouchServer implements IFakeCouch.Server {
       get: build('get'),
       post: build('post'),
       put: build('put'),
-      delete: build('delete')
+      delete: build('delete'),
+      copy: build('copy')
     };
 
     return { router, scope };
@@ -133,6 +134,7 @@ export default class FakeCouchServer implements IFakeCouch.Server {
     this.mockServer();
     this.mockDesign();
     this.mockDatabase();
+    this.mockLocalDocuments();
     this.mockDocument();
 
     this.app.use(router);
@@ -1121,7 +1123,11 @@ export default class FakeCouchServer implements IFakeCouch.Server {
         db.revisionLimit = value;
 
         return [200, { ok: true }];
-      }))
+      }));
+  }
+
+  mockLocalDocuments(): void {
+    this.scope
       /**
        * GET /{db}/_local_docs
        * @see https://docs.couchdb.org/en/latest/api/local.html#get--db-_local_docs
@@ -1159,6 +1165,79 @@ export default class FakeCouchServer implements IFakeCouch.Server {
             total_rows: null
           }
         ];
+      }))
+      /**
+       * GET /{db}/_local/{docid}
+       * @see https://docs.couchdb.org/en/latest/api/local.html#get--db-_local-docid
+       */
+      .get('/:dbname/_local/:docid', (req) => this.handleDatabaseRequest(req, (db) => {
+        if (db.localDocs.hasOwnProperty(req.params.docid)) {
+          return [200, db.localDocs[req.params.docid]];
+        }
+
+        return [404];
+      }))
+      /**
+       * PUT /{db}/_local/{docid}
+       * @see https://docs.couchdb.org/en/latest/api/local.html#put--db-_local-docid
+       */
+      .put('/:dbname/_local/:docid', (req) => this.handleDatabaseRequest(req, (db) => {
+        if (db.localDocs.hasOwnProperty(req.params.docid)) {
+          return [409];
+        }
+
+        const doc = db.addDoc(req.body, req.params.docid);
+
+        return [
+          200,
+          {
+            ok: true,
+            id: doc._id,
+            rev: doc._rev
+          }
+        ];
+      }))
+      /**
+       * DELETE /{db}/_local/{docid}
+       * @see https://docs.couchdb.org/en/latest/api/local.html#delete--db-_local-docid
+       */
+      .delete('/:dbname/_local/:docid', (req) => this.handleDatabaseRequest(req, (db) => {
+        if (db.localDocs.hasOwnProperty(req.params.docid)) {
+          db.localDocs[req.params.docid]._deleted = true;
+
+          const doc = db.addDoc(db.localDocs[req.params.docid]);
+
+          return [
+            200,
+            {
+              ok: true,
+              id: doc._id,
+              rev: doc._rev
+            }
+          ];
+        }
+
+        return [404];
+      }))
+      /**
+       * COPY /{db}/_local/{docid}
+       * @see https://docs.couchdb.org/en/latest/api/local.html#delete--db-_local-docid
+       */
+      .copy('/:dbname/_local/:docid', (req) => this.handleDatabaseRequest(req, (db) => {
+        if (db.localDocs.hasOwnProperty(req.params.docid)) {
+          const doc = db.addDoc(db.localDocs[req.params.docid]);
+
+          return [
+            200,
+            {
+              ok: true,
+              id: doc._id,
+              rev: doc._rev
+            }
+          ];
+        }
+
+        return [404];
       }));
   }
 
@@ -1215,6 +1294,26 @@ export default class FakeCouchServer implements IFakeCouch.Server {
           db.docs[req.params.docid]._deleted = true;
 
           const doc = db.addDoc(db.docs[req.params.docid]);
+
+          return [
+            200,
+            {
+              ok: true,
+              id: doc._id,
+              rev: doc._rev
+            }
+          ];
+        }
+
+        return [404];
+      }))
+      /**
+       * COPY /{db}/{docid}
+       * @see https://docs.couchdb.org/en/latest/api/document/common.html#copy--db-docid
+       */
+      .copy('/:dbname/:docid', (req) => this.handleDatabaseRequest(req, (db) => {
+        if (db.localDocs.hasOwnProperty(req.params.docid)) {
+          const doc = db.addDoc(db.localDocs[req.params.docid]);
 
           return [
             200,
