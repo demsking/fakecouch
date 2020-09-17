@@ -1376,4 +1376,18 @@ describe('Database', () => {
       }
     });
   });
+
+  it('GET /{db}/_shards/{docid}', () => {
+    const dbname = uuid();
+    const endpoint = `/${dbname}/_shards/docid`;
+
+    couch.addDatabase(dbname);
+
+    return api.get(endpoint).expect(200, {
+      range: 'e0000000-ffffffff',
+      nodes: [
+        'node1@127.0.0.1'
+      ]
+    });
+  });
 });
