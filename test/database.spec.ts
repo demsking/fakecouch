@@ -1486,4 +1486,24 @@ describe('Database', () => {
 
     return api.post(endpoint).expect(202, { ok: true });
   });
+
+  it('POST /{db}/_compact/{ddoc}', () => {
+    const dbname = uuid();
+    const db = couch.addDatabase(dbname);
+
+    db.addDesign({
+      _id: '_design/posts',
+      views: {
+        items: {
+          map: '(doc) => {if(doc.type === "posts") emit(doc._id, doc._rev)}'
+        }
+      }
+    });
+
+    return Promise.all([
+      api.post('/404/_compact/posts').expect(400),
+      api.post(`/${dbname}/_compact/404`).expect(404, 'Design document not found'),
+      api.post(`/${dbname}/_compact/posts`).expect(202, { ok: true }),
+    ]);
+  });
 });

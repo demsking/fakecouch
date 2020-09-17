@@ -643,20 +643,24 @@ export default class FakeCouchServer implements IFakeCouch.Server {
       });
   }
 
-  handleDatabaseRequest(req: Request, handler: (db: FakeDatabase) => IFakeCouch.ReplyFunctionReturns): IFakeCouch.ReplyFunctionReturns {
+  handleDatabaseRequest(req: Request, handler: (db: FakeDatabase) => IFakeCouch.ReplyFunctionReturns, errorCore = 404): IFakeCouch.ReplyFunctionReturns {
     if (this.databases.hasOwnProperty(req.params.dbname)) {
       const db = this.databases[req.params.dbname];
 
       return handler(db);
     }
 
-    return [
-      404,
-      {
-        error: 'not_found',
-        reason: 'Database does not exist.'
-      }
-    ];
+    if (errorCore === 404) {
+      return [
+        404,
+        {
+          error: 'not_found',
+          reason: 'Database does not exist.'
+        }
+      ];
+    }
+
+    return [errorCore];
   }
 
   mockDatabase(): void {
@@ -989,9 +993,11 @@ export default class FakeCouchServer implements IFakeCouch.Server {
        * POST /{db}/_compact/{ddoc}
        * @see https://docs.couchdb.org/en/latest/api/database/compact.html#db-compact-design-doc
        */
-      .post('/:dbname/_compact/:ddoc', (req) => this.handleDatabaseRequest(req, (db) => [202, {
-        ok: true
-      }]))
+      .post('/:dbname/_compact/:ddoc', (req) => this.handleDatabaseRequest(req, (db) => {
+        return db.hasDesign(`_design/${req.params.ddoc}`)
+          ? [202, { ok: true }]
+          : [404, 'Design document not found'];
+      }, 400))
       /**
        * POST /{db}/_ensure_full_commit
        * @see https://docs.couchdb.org/en/latest/api/database/compact.html#db-ensure-full-commit
