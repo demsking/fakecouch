@@ -154,6 +154,7 @@ export namespace IFakeCouch {
     readonly docs: Record<string, DocumentRef>;
     readonly localDocs: Record<string, DocumentRef>;
     readonly designs: Record<string, DocumentRef>;
+    readonly indexes: IFakeCouch.IndexDefinition[];
 
     addDoc(doc: Document, docid?: string): DocumentRef;
     addDocs(docs: Document[]): void;
