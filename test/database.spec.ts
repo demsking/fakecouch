@@ -1588,4 +1588,13 @@ describe('Database', () => {
 
     return api.get(endpoint).expect(200, '1000');
   });
+
+  it('PUT /{db}/_purged_infos_limit', () => {
+    const dbname = uuid();
+    const endpoint = `/${dbname}/_purged_infos_limit`;
+
+    couch.addDatabase(dbname);
+
+    return api.put(endpoint).expect(200, { ok: true });
+  });
 });
