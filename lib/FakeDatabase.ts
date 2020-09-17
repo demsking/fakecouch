@@ -483,7 +483,7 @@ export default class FakeDatabase implements IFakeCouch.Database {
           return new RegExp(operatorValue).test(`${fieldValue}`);
 
         case '$all':
-          if (!Array.isArray(operatorValue)) {
+          if (!Array.isArray(operatorValue) && operatorValue !== null) {
             throw Error('Invalid $all value');
           }
 
@@ -498,7 +498,9 @@ export default class FakeDatabase implements IFakeCouch.Database {
             && fieldValue.every((fieldItem) => this._findFilter(fieldItem, operatorValue));
 
         case '$keyMapMatch':
-          return typeof fieldValue === 'object' && !Array.isArray(fieldValue)
+          return typeof fieldValue === 'object'
+            && !Array.isArray(fieldValue)
+            && fieldValue !== null
             && Object.keys(fieldValue).some((fieldKey) => this._findFilter(fieldKey, operatorValue));
       }
 
