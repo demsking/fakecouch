@@ -1549,4 +1549,25 @@ describe('Database', () => {
       }
     });
   });
+
+  it('PUT /{db}/_security', () => {
+    const dbname = uuid();
+    const endpoint = `/${dbname}/_security`;
+    const db = couch.addDatabase(dbname);
+    const securityObject = {
+      admins: {
+        names: ['superuser'],
+        roles: ['admins']
+      },
+      members: {
+        names: ['user1', 'user2'],
+        roles: ['developers']
+      }
+    };
+
+    return api.put(endpoint)
+      .send(securityObject)
+      .expect(200, { ok: true })
+      .then(() => expect(db.security).toEqual(securityObject));
+  });
 });
