@@ -120,4 +120,24 @@ describe('Local (non-replicating) Documents', () => {
       }),
     ]);
   });
+
+  it('COPY /{db}/_local/{docid}', () => {
+    const dbname = uuid();
+    const db = couch.addDatabase(dbname);
+    const doc = { _id: '_local/x1900', type: 'posts', year: 1900 };
+
+    db.addDocs([doc]);
+
+    return Promise.all([
+      api.copy(`/${dbname}/_local/404`).expect(404),
+      api.copy(`/${dbname}/_local/x1900`).expect(400),
+      api.copy(`/${dbname}/_local/x1900`).set('destination', 'x1901').expect(400),
+      api.copy(`/${dbname}/_local/x1900`).set('destination', doc._id).expect(409),
+      api.copy(`/${dbname}/_local/x1900`).set('destination', '_local/x1901').expect(200, {
+        ok: true,
+        id: '_local/x1901',
+        rev: '0-1'
+      }),
+    ]);
+  });
 });

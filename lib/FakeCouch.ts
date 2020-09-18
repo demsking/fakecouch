@@ -1227,11 +1227,27 @@ export default class FakeCouchServer implements IFakeCouch.Server {
       }))
       /**
        * COPY /{db}/_local/{docid}
-       * @see https://docs.couchdb.org/en/latest/api/local.html#delete--db-_local-docid
+       * @see https://docs.couchdb.org/en/latest/api/local.html#copy--db-_local-docid
        */
       .copy('/:dbname/_local/:docid', (req) => this.handleDatabaseRequest(req, (db) => {
-        if (db.localDocs.hasOwnProperty(req.params.docid)) {
-          const doc = db.addDoc(db.localDocs[req.params.docid]);
+        const docid = `_local/${req.params.docid}`;
+
+        if (db.localDocs.hasOwnProperty(docid)) {
+          const destination: string = req.headers.destination as any;
+
+          if (!destination || !destination.startsWith('_local/')) {
+            return [400];
+          }
+
+          if (destination === docid) {
+            return [409];
+          }
+
+          const doc = db.addDoc({
+            ...db.localDocs[docid],
+            _rev: undefined,
+            _id: destination
+          });
 
           return [
             200,
