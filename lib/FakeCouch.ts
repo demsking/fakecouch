@@ -1334,8 +1334,24 @@ export default class FakeCouchServer implements IFakeCouch.Server {
        * @see https://docs.couchdb.org/en/latest/api/document/common.html#copy--db-docid
        */
       .copy('/:dbname/:docid', (req) => this.handleDatabaseRequest(req, (db) => {
-        if (db.localDocs.hasOwnProperty(req.params.docid)) {
-          const doc = db.addDoc(db.localDocs[req.params.docid]);
+        const docid = req.params.docid;
+
+        if (db.docs.hasOwnProperty(docid)) {
+          const destination: string = req.headers.destination as any;
+
+          if (!destination) {
+            return [400];
+          }
+
+          if (destination === docid) {
+            return [409];
+          }
+
+          const doc = db.addDoc({
+            ...db.docs[docid],
+            _rev: undefined,
+            _id: destination
+          });
 
           return [
             200,
