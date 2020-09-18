@@ -1169,8 +1169,10 @@ export default class FakeCouchServer implements IFakeCouch.Server {
        * @see https://docs.couchdb.org/en/latest/api/local.html#get--db-_local-docid
        */
       .get('/:dbname/_local/:docid', (req) => this.handleDatabaseRequest(req, (db) => {
-        if (db.localDocs.hasOwnProperty(req.params.docid)) {
-          return [200, db.localDocs[req.params.docid]];
+        const docid = `_local/${req.params.docid}`;
+
+        if (db.localDocs.hasOwnProperty(docid)) {
+          return [200, db.localDocs[docid]];
         }
 
         return [404];
