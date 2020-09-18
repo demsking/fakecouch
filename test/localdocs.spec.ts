@@ -84,4 +84,23 @@ describe('Local (non-replicating) Documents', () => {
       }),
     ]);
   });
+
+  it('PUT /{db}/_local/{docid}', () => {
+    const dbname = uuid();
+    const db = couch.addDatabase(dbname);
+    const doc = { _id: '_local/x1900', type: 'posts', year: 1900 };
+
+    db.addDocs([
+      { _id: '_local/x1899', type: 'posts', year: 1899 },
+    ]);
+
+    return Promise.all([
+      api.put(`/${dbname}/_local/x1899`).send({ _id: '_local/x1899' }).expect(409),
+      api.put(`/${dbname}/_local/x1900`).send(doc).expect(200, {
+        ok: true,
+        id: doc._id,
+        rev: '0-1'
+      }),
+    ]);
+  });
 });
