@@ -1149,7 +1149,9 @@ export default class FakeCouchServer implements IFakeCouch.Server {
        * @see https://docs.couchdb.org/en/latest/api/local.html#post--db-_local_docs
        */
       .post('/:dbname/_local_docs', (req) => this.handleDatabaseRequest(req, (db) => {
-        const result = req.body.keys.map((key: string) => db.localDocs[key]).map((doc: Record<string, any>) => ({
+        const docs = req.body.keys.map((key: string) => db.localDocs[key]);
+        const items = docs.map((doc: IFakeCouch.DocumentRef) => ({
+          doc,
           value: {
             rev: doc._rev
           },
@@ -1159,11 +1161,7 @@ export default class FakeCouchServer implements IFakeCouch.Server {
 
         return [
           200,
-          {
-            offset: null,
-            rows: result,
-            total_rows: null
-          }
+          FakeDatabase.parseDesignViewItems(items, req.query)
         ];
       }))
       /**

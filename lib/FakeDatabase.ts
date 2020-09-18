@@ -232,7 +232,7 @@ export default class FakeDatabase implements IFakeCouch.Database {
     }
 
     if (doc._id.startsWith('_local/')) {
-      doc._rev = '1-1';
+      doc._rev = '0-1';
 
       this.localDocs[doc._id] = doc as any;
     } else {
