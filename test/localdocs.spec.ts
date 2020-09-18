@@ -18,7 +18,7 @@ describe('Local (non-replicating) Documents', () => {
 
   afterAll(() => couch.reset());
 
-  it('GET, POST /{db}/_local_docs', () => {
+  it('GET /{db}/_local_docs', () => {
     const dbname = uuid();
     const endpoint = `/${dbname}/_local_docs`;
     const db = couch.addDatabase(dbname);
@@ -29,7 +29,17 @@ describe('Local (non-replicating) Documents', () => {
         rows: [],
         total_rows: 0
       })
-      // .then(() => api.post(endpoint));
-      // .then(() => expect(db.revisionLimit).toBe(2000));
+      .then(() => db.addDocs([
+        { _id: '_local/x1899', type: 'posts', year: 1899 },
+        { _id: '_local/x1900', type: 'posts', year: 1900 },
+      ]))
+      .then(() => api.get(endpoint).expect(200, {
+        offset: 0,
+        rows: [
+          { _id: '_local/x1899', _rev: '1-1', type: 'posts', year: 1899 },
+          { _id: '_local/x1900', _rev: '1-1', type: 'posts', year: 1900 },
+        ],
+        total_rows: 2
+      }));
   });
 });
