@@ -103,4 +103,21 @@ describe('Local (non-replicating) Documents', () => {
       }),
     ]);
   });
+
+  it('DELETE /{db}/_local/{docid}', () => {
+    const dbname = uuid();
+    const db = couch.addDatabase(dbname);
+    const doc = { _id: '_local/x1900', type: 'posts', year: 1900 };
+
+    db.addDocs([doc]);
+
+    return Promise.all([
+      api.delete(`/${dbname}/_local/404`).expect(404),
+      api.delete(`/${dbname}/_local/x1900`).expect(200, {
+        ok: true,
+        id: doc._id,
+        rev: '0-1'
+      }),
+    ]);
+  });
 });

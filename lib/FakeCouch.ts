@@ -1206,10 +1206,12 @@ export default class FakeCouchServer implements IFakeCouch.Server {
        * @see https://docs.couchdb.org/en/latest/api/local.html#delete--db-_local-docid
        */
       .delete('/:dbname/_local/:docid', (req) => this.handleDatabaseRequest(req, (db) => {
-        if (db.localDocs.hasOwnProperty(req.params.docid)) {
-          db.localDocs[req.params.docid]._deleted = true;
+        const docid = `_local/${req.params.docid}`;
 
-          const doc = db.addDoc(db.localDocs[req.params.docid]);
+        if (db.localDocs.hasOwnProperty(docid)) {
+          db.localDocs[docid]._deleted = true;
+
+          const doc = db.addDoc(db.localDocs[docid]);
 
           return [
             200,
