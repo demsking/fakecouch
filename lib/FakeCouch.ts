@@ -132,10 +132,10 @@ export default class FakeCouchServer implements IFakeCouch.Server {
     this.scope = scope;
 
     this.mockServer();
-    this.mockDesign();
+    this.mockDesignDocuments();
     this.mockDatabase();
     this.mockLocalDocuments();
-    this.mockDocument();
+    this.mockDocuments();
 
     this.app.use(router);
     this.app.use('*', (req, res) => res.status(501).send(`No implementation for ${req.method} ${req.url}`));
@@ -1263,7 +1263,7 @@ export default class FakeCouchServer implements IFakeCouch.Server {
       }));
   }
 
-  mockDocument(): void {
+  mockDocuments(): void {
     this.scope
       /**
        * HEAD /{db}/{docid}
@@ -1367,23 +1367,41 @@ export default class FakeCouchServer implements IFakeCouch.Server {
       }));
   }
 
-  mockDesign(): void {
+  mockDesignDocuments(): void {
     this.scope
+      /**
+       * HEAD /{db}/_design/{ddoc}/_view/{view}
+       * @see https://docs.couchdb.org/en/latest/api/ddoc/views.html#get--db-_design-ddoc-_view-view
+       */
       .head('/:dbname/_design/:ddocname/_view/:viewname', (req) => this.handleDatabaseRequest(req, (db) => {
         const ddocid = `_design/${req.params.ddocname}`;
         const viewname = req.params.viewname;
 
         return db.hasDesignView(ddocid, viewname) ? [200] : [404];
       }))
+      /**
+       * GET /{db}/_design/{ddoc}/_view/{view}
+       * @see https://docs.couchdb.org/en/latest/api/ddoc/views.html#get--db-_design-ddoc-_view-view
+       */
       .get('/:dbname/_design/:ddocname/_view/:viewname', (req) => this.handleDatabaseRequest(req, (db) => {
         const ddocid = `_design/${req.params.ddocname}`;
         const viename = req.params.viewname;
 
         if (db.hasDesignView(ddocid, viename)) {
-          return [
-            200,
-            db.getDesignView(ddocid, viename, req.query)
-          ];
+          try {
+            return [
+              200,
+              db.getDesignView(ddocid, viename, req.query)
+            ];
+          } catch (err) {
+            return [
+              400,
+              {
+                error: 'query_parse_error',
+                reason: err.message
+              }
+            ];
+          }
         }
 
         return [404];
@@ -1419,24 +1437,22 @@ export default class FakeCouchServer implements IFakeCouch.Server {
        * @see https://docs.couchdb.org/en/latest/api/ddoc/common.html#put--db-_design-ddoc
        */
       .put('/:dbname/_design/:ddocname', (req) => this.handleDatabaseRequest(req, (db) => {
-        if (req.body._id) {
-          if (db.designs.hasOwnProperty(req.body._id)) {
-            return [409];
-          }
+        req.body._id = `_design/${req.params.ddocname}`;
 
-          const design = db.addDesign(req.body);
-
-          return [
-            200,
-            {
-              ok: true,
-              id: design._id,
-              rev: design._rev
-            }
-          ];
+        if (db.designs.hasOwnProperty(req.body._id)) {
+          return [409];
         }
 
-        return [400];
+        const design = db.addDesign(req.body);
+
+        return [
+          200,
+          {
+            ok: true,
+            id: design._id,
+            rev: design._rev
+          }
+        ];
       }))
       /**
        * DELETE /{db}/_design/{ddoc}
@@ -1456,6 +1472,42 @@ export default class FakeCouchServer implements IFakeCouch.Server {
               ok: true,
               id: design._id,
               rev: design._rev
+            }
+          ];
+        }
+
+        return [404];
+      }))
+      /**
+       * COPY /{db}/_design/{ddoc}
+       * @see https://docs.couchdb.org/en/latest/api/ddoc/common.html#copy--db-_design-ddoc
+       */
+      .copy('/:dbname/_design/:ddocname', (req) => this.handleDatabaseRequest(req, (db) => {
+        const ddoc = `_design/${req.params.ddocname}`;
+
+        if (db.designs.hasOwnProperty(ddoc)) {
+          const destination: string = req.headers.destination as any;
+
+          if (!destination || !destination.startsWith('_design/')) {
+            return [400];
+          }
+
+          if (destination === ddoc) {
+            return [409];
+          }
+
+          const doc = db.addDoc({
+            ...db.docs[ddoc],
+            _rev: undefined,
+            _id: destination
+          });
+
+          return [
+            200,
+            {
+              ok: true,
+              id: doc._id,
+              rev: doc._rev
             }
           ];
         }

@@ -59,11 +59,12 @@ interface QueryResponse {
   };
 }
 
-interface FindByViewRequest extends GenericRequest {
+interface DesignRequest extends GenericRequest {
   // eslint-disable-next-line camelcase
-  include_docs?: boolean;
-  descending?: boolean;
-  group?: boolean;
+  include_docs?: 'true' | 'false';
+  descending?: 'true' | 'false';
+  group?: 'true' | 'false';
+  reduce?: 'true' | 'false';
   skip?: number;
   key?: string;
 }
@@ -153,41 +154,41 @@ export default class FakeDatabase implements IFakeCouch.Database {
     this.info.db_name = name;
   }
 
-  static parseDesignViewItems(items: LocalViewItem[], request: FindByViewRequest = {}, view?: LocalView): any {
+  static parseDesignViewItems(items: LocalViewItem[], request: DesignRequest, view?: LocalView): any {
     const skip = Number.parseInt(`${request.skip}`, 10) || 0;
     const limit = Number.parseInt(`${request.limit}`, 10) || 20;
 
-    if (request.hasOwnProperty('descending')) {
-      if (request.descending) {
-        items.sort((a, b) => {
-          if (typeof b.key === 'string') {
-            return b.key.localeCompare(a.key);
-          }
+    if (request.descending === 'true') {
+      items.sort((a, b) => {
+        if (typeof b.key === 'string') {
+          return b.key.localeCompare(a.key);
+        }
 
-          return b.key - a.key;
-        });
-      } else {
-        items.sort((a, b) => {
-          if (typeof a.key === 'string') {
-            return a.key.localeCompare(b.key);
-          }
+        return b.key - a.key;
+      });
+    } else if (request.descending && request.descending !== 'false') {
+      throw new Error(`Invalid boolean parameter: ${JSON.stringify(request.descending)}`);
+    } else {
+      items.sort((a, b) => {
+        if (typeof a.key === 'string') {
+          return a.key.localeCompare(b.key);
+        }
 
-          return a.key - b.key;
-        });
-      }
+        return a.key - b.key;
+      });
     }
 
     items = items.slice(skip, skip + limit);
 
     if (view && view.reducer) {
-      if (request.group) {
+      if (request.group === 'true') {
         const groups: Record<string, any> = {};
 
         switch (view.reducer) {
           case '_sum':
-            view.items.forEach(({ key, value }) => {
+            items.forEach(({ key, value }) => {
               if (groups.hasOwnProperty(key)) {
-                groups[key] += value;
+                groups[key].value += value;
               } else {
                 groups[key] = { key, value: value || 0 };
               }
@@ -195,11 +196,11 @@ export default class FakeDatabase implements IFakeCouch.Database {
             break;
 
           case '_count':
-            view.items.forEach(({ key }) => {
+            items.forEach(({ key }) => {
               if (groups.hasOwnProperty(key)) {
-                groups[key]++;
+                groups[key].value++;
               } else {
-                groups[key] = { key, value: 0 };
+                groups[key] = { key, value: 1 };
               }
             });
             break;
@@ -208,17 +209,19 @@ export default class FakeDatabase implements IFakeCouch.Database {
         return { rows: Object.values(groups) };
       }
 
-      return {
-        rows: [
-          { key: null, value: view.reduce }
-        ]
-      };
+      if (request.reduce !== 'false') {
+        return {
+          rows: [
+            { key: null, value: view.reduce }
+          ]
+        };
+      }
     }
 
     return {
       offset: skip,
       total_rows: items.length,
-      rows: request.include_docs
+      rows: request.include_docs === 'true'
         ? items
         : items.map(({ id, key, value }) => ({ id, key, value }))
     };
@@ -360,7 +363,7 @@ export default class FakeDatabase implements IFakeCouch.Database {
     return this.designs.hasOwnProperty(ddocid) && this.storage[ddocid].hasOwnProperty(viewname);
   }
 
-  getDesignView(ddocid: string, viewname: string, request: FindByViewRequest = {}): any {
+  getDesignView(ddocid: string, viewname: string, request: DesignRequest = {}): any {
     if (this.designs.hasOwnProperty(ddocid)) {
       const views = this.storage[ddocid];
       const view = views[viewname];
