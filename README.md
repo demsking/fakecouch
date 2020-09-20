@@ -88,8 +88,8 @@ declare class Database {
 }
 ```
 
-See [typings/IFakeCouch.d.ts](typings/IFakeCouch.d.ts) for the comple API
-interfaces.
+See [typings/IFakeCouch.d.ts](https://gitlab.com/demsking/fakecouch/blob/master/typings/IFakeCouch.d.ts)
+for the comple API interfaces.
 
 ## License
 
