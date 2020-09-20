@@ -1,8 +1,9 @@
 /* eslint-disable no-eval */
 /* eslint-disable camelcase */
 
-import * as dotProp from 'dot-prop';
-import { v4 as uuid } from 'uuid';
+const dotProp = require('dot-prop');
+const uuid = require('uuid-random');
+
 import { IFakeCouch } from '../typings/IFakeCouch';
 
 const equal = require('deep-equal');

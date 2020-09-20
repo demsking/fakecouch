@@ -1,6 +1,7 @@
+const uuid = require('uuid-random');
+
 import supertest from 'supertest';
 import FakeCouchDB from '../lib/FakeCouch';
-import { v4 as uuid } from 'uuid';
 import { IFakeCouch } from '../typings/IFakeCouch';
 
 const couch: IFakeCouch.Server = new FakeCouchDB({

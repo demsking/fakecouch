@@ -1,5 +1,7 @@
 import express, { Response } from 'express';
 
+export default class extends IFakeCouch.Server {}
+
 export namespace IFakeCouch {
   export type Options = {
     port?: number;
@@ -155,7 +157,7 @@ export namespace IFakeCouch {
     roles: string[];
   };
 
-  export interface Database {
+  export class Database {
     readonly name: string;
     readonly docs: Record<string, DocumentRef>;
     readonly localDocs: Record<string, DocumentRef>;
@@ -175,10 +177,12 @@ export namespace IFakeCouch {
     deleteDesign(ddocid: string): void;
   }
 
-  export interface Server {
+  export class Server {
     readonly serveUrl: string;
     readonly serverPort: number;
     readonly databases: Record<string, Database>;
+
+    constructor(options: Options);
 
     setup(): void;
     reset(): void;

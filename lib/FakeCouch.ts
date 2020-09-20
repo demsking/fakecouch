@@ -4,13 +4,13 @@
 
 const express = require('express');
 const bodyParser = require('body-parser');
+const uuid = require('uuid-random');
+const pkg = require('../package.json');
 
 import { Application, Response, Request, Router } from 'express';
-import { v4 as uuid } from 'uuid';
 import { Server } from 'http';
 import { IFakeCouch } from '../typings/IFakeCouch';
 import FakeDatabase from './FakeDatabase';
-import pkg from '../package.json';
 
 const sendResponse = (res: Response, [code, body, headers = {}]: [number, any?, IFakeCouch.Headers?]) => {
   res.status(code);
