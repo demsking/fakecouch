@@ -97,7 +97,7 @@ export default class FakeDatabase implements IFakeCouch.Database {
     sizes: {
       file: 1178613587,
       external: 1713103872,
-      active: 1162451555
+      active: 1162451555,
     },
     purge_seq: 0,
     doc_del_count: 0,
@@ -108,9 +108,9 @@ export default class FakeDatabase implements IFakeCouch.Database {
       q: 1,
       n: 1,
       w: 1,
-      r: 1
+      r: 1,
     },
-    instance_start_time: '0'
+    instance_start_time: '0',
   };
 
   revisionLimit = 1000;
@@ -128,26 +128,26 @@ export default class FakeDatabase implements IFakeCouch.Database {
       def: {
         fields: [
           {
-            _id: 'asc'
-          }
-        ]
-      }
-    }
+            _id: 'asc',
+          },
+        ],
+      },
+    },
   ];
 
   readonly security: Record<'admins' | 'members', IFakeCouch.SecurityObject> = {
     admins: {
       names: [],
       roles: [
-        '_admin'
-      ]
+        '_admin',
+      ],
     },
     members: {
       names: [],
       roles: [
-        '_admin'
-      ]
-    }
+        '_admin',
+      ],
+    },
   };
 
   constructor(name: string) {
@@ -213,8 +213,8 @@ export default class FakeDatabase implements IFakeCouch.Database {
       if (request.reduce !== 'false') {
         return {
           rows: [
-            { key: null, value: view.reduce }
-          ]
+            { key: null, value: view.reduce },
+          ],
         };
       }
     }
@@ -224,7 +224,7 @@ export default class FakeDatabase implements IFakeCouch.Database {
       total_rows: items.length,
       rows: request.include_docs === 'true'
         ? items
-        : items.map(({ id, key, value }) => ({ id, key, value }))
+        : items.map(({ id, key, value }) => ({ id, key, value })),
     };
   }
 
@@ -275,8 +275,8 @@ export default class FakeDatabase implements IFakeCouch.Database {
         fields: index.index.fields.map((item) => {
           return typeof item === 'string' ? { [item]: 'asc' } : item;
         }),
-        partial_filter_selector: index.index.partial_filter_selector
-      }
+        partial_filter_selector: index.index.partial_filter_selector,
+      },
     };
 
     this.indexes.push(indexDefinition);
@@ -311,7 +311,7 @@ export default class FakeDatabase implements IFakeCouch.Database {
         items: [],
         mapper: eval(doc.views[name].map),
         reduce: 0,
-        reducer: doc.views[name].reduce
+        reducer: doc.views[name].reduce,
       };
     }
 
@@ -503,13 +503,13 @@ export default class FakeDatabase implements IFakeCouch.Database {
       skip = 0,
       fields = [],
       sort = [],
-      execution_stats = false
+      execution_stats = false,
     } = request;
 
     const startTime = process.hrtime();
     const items = Object.values(this.docs);
     const result: QueryResponse = {
-      docs: items
+      docs: items,
     };
 
     Object.keys(selector).forEach((key) => {
@@ -576,7 +576,7 @@ export default class FakeDatabase implements IFakeCouch.Database {
       sort.forEach((sortItem) => {
         if (typeof sortItem === 'string') {
           sortItem = {
-            [sortItem]: 'asc'
+            [sortItem]: 'asc',
           };
         }
 
@@ -622,7 +622,7 @@ export default class FakeDatabase implements IFakeCouch.Database {
         total_docs_examined: items.length,
         total_quorum_docs_examined: 0,
         results_returned: result.docs.length,
-        execution_time_ms: process.hrtime(startTime)[1] / 1000000
+        execution_time_ms: process.hrtime(startTime)[1] / 1000000,
       };
     }
 

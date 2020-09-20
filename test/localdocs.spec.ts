@@ -6,7 +6,7 @@ import { IFakeCouch } from '../typings/IFakeCouch';
 
 const couch: IFakeCouch.Server = new FakeCouchDB({
   port: 59844,
-  logger: false
+  logger: false,
 });
 
 const api = supertest(couch.serveUrl);
@@ -28,7 +28,7 @@ describe('Local (non-replicating) Documents', () => {
       .expect(200, {
         offset: 0,
         rows: [],
-        total_rows: 0
+        total_rows: 0,
       })
       .then(() => db.addDocs([
         { _id: '_local/x1899', type: 'posts', year: 1899 },
@@ -40,7 +40,7 @@ describe('Local (non-replicating) Documents', () => {
           { _id: '_local/x1899', _rev: '0-1', type: 'posts', year: 1899 },
           { _id: '_local/x1900', _rev: '0-1', type: 'posts', year: 1900 },
         ],
-        total_rows: 2
+        total_rows: 2,
       }));
   });
 
@@ -55,18 +55,18 @@ describe('Local (non-replicating) Documents', () => {
     ]);
 
     return api.post(endpoint).send({ keys: ['_local/x1899'] }).expect(200, {
-        offset: 0,
-        rows: [
-          {
-            value: {
-              rev: '0-1',
-            },
-            id: '_local/x1899',
-            key: '_local/x1899',
-          }
-        ],
-        total_rows: 1
-      });
+      offset: 0,
+      rows: [
+        {
+          value: {
+            rev: '0-1',
+          },
+          id: '_local/x1899',
+          key: '_local/x1899',
+        },
+      ],
+      total_rows: 1,
+    });
   });
 
   it('GET /{db}/_local/{docid}', () => {
@@ -81,7 +81,7 @@ describe('Local (non-replicating) Documents', () => {
       api.get(`/${dbname}/_local/404`).expect(404),
       api.get(`/${dbname}/_local/x1899`).expect(200, {
         ...db.localDocs['_local/x1899'],
-        _rev: '0-1'
+        _rev: '0-1',
       }),
     ]);
   });
@@ -100,7 +100,7 @@ describe('Local (non-replicating) Documents', () => {
       api.put(`/${dbname}/_local/x1900`).send(doc).expect(200, {
         ok: true,
         id: doc._id,
-        rev: '0-1'
+        rev: '0-1',
       }),
     ]);
   });
@@ -117,7 +117,7 @@ describe('Local (non-replicating) Documents', () => {
       api.delete(`/${dbname}/_local/x1900`).expect(200, {
         ok: true,
         id: doc._id,
-        rev: '0-1'
+        rev: '0-1',
       }),
     ]);
   });
@@ -137,7 +137,7 @@ describe('Local (non-replicating) Documents', () => {
       api.copy(`/${dbname}/_local/x1900`).set('destination', '_local/x1901').expect(200, {
         ok: true,
         id: '_local/x1901',
-        rev: '0-1'
+        rev: '0-1',
       }),
     ]);
   });

@@ -4,7 +4,7 @@ import { IFakeCouch } from '../typings/IFakeCouch';
 
 const couch: IFakeCouch.Server = new FakeCouchDB({
   port: 59842,
-  logger: false
+  logger: false,
 });
 
 const api = supertest(couch.serveUrl);
@@ -23,26 +23,26 @@ describe('Authentication', () => {
       .expect(200, {
         info: {
           authenticated: 'cookie',
-          authentication_handlers: ['cookie', 'default']
+          authentication_handlers: ['cookie', 'default'],
         },
         ok: true,
         userCtx: {
           name: null,
-          roles: []
-        }
+          roles: [],
+        },
       })
       .then(() => api.post('/_session').send('name=arya&password=relax').expect(200))
       .then(() => {
         return api.get('/_session').expect(200, {
           info: {
             authenticated: 'cookie',
-            authentication_handlers: ['cookie', 'default']
+            authentication_handlers: ['cookie', 'default'],
           },
           ok: true,
           userCtx: {
             name: 'arya',
-            roles: ['_admin']
-          }
+            roles: ['_admin'],
+          },
         });
       })
       .then(() => api.delete('/_session'))
@@ -50,13 +50,13 @@ describe('Authentication', () => {
         return api.get('/_session').expect(200, {
           info: {
             authenticated: 'cookie',
-            authentication_handlers: ['cookie', 'default']
+            authentication_handlers: ['cookie', 'default'],
           },
           ok: true,
           userCtx: {
             name: null,
-            roles: []
-          }
+            roles: [],
+          },
         });
       });
   });
@@ -68,8 +68,8 @@ describe('Authentication', () => {
         ok: true,
         name: 'root',
         roles: [
-          '_admin'
-        ]
+          '_admin',
+        ],
       }))
       .then(() => api.get('/_all_dbs').expect(200));
   });

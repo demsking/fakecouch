@@ -6,7 +6,7 @@ import { IFakeCouch } from '../typings/IFakeCouch';
 
 const couch: IFakeCouch.Server = new FakeCouchDB({
   port: 59846,
-  logger: false
+  logger: false,
 });
 
 const api = supertest(couch.serveUrl);
@@ -27,9 +27,9 @@ describe('Design Documents', () => {
       _id: '_design/posts',
       views: {
         items: {
-          map: '(doc) => {if(doc.type === "posts") emit(doc._id, doc._rev)}'
-        }
-      }
+          map: '(doc) => {if(doc.type === "posts") emit(doc._id, doc._rev)}',
+        },
+      },
     });
 
     return Promise.all([
@@ -62,25 +62,25 @@ describe('Design Documents', () => {
           },
           by_year_count: {
             map: '(doc) => {if(doc.type === "posts") emit(doc.year, doc.value)}',
-            reduce: '_count'
+            reduce: '_count',
           },
           by_year_sum: {
             map: '(doc) => {if(doc.type === "posts") emit(doc.year, doc.value)}',
-            reduce: '_sum'
+            reduce: '_sum',
           },
-        }
+        },
       });
     });
 
-    it('GET /${dbname}/_design/404/_view/items', () => {
+    it('GET /{db}/_design/404/_view/items', () => {
       return api.get(`/${dbname}/_design/404/_view/items`).expect(404);
     });
 
-    it('GET /${dbname}/_design/posts/_view/404', () => {
+    it('GET /{db}/_design/posts/_view/404', () => {
       return api.get(`/${dbname}/_design/posts/_view/404`).expect(404);
     });
 
-    it('GET /${dbname}/_design/posts/_view/items', () => {
+    it('GET /{db}/_design/posts/_view/items', () => {
       return api.get(`/${dbname}/_design/posts/_view/items`).expect(200, {
         offset: 0,
         total_rows: 4,
@@ -105,11 +105,11 @@ describe('Design Documents', () => {
             key: db.docs.xpost3._id,
             value: db.docs.xpost3._rev,
           },
-        ]
+        ],
       });
     });
 
-    it('GET /${dbname}/_design/posts/_view/items?skip=1', () => {
+    it('GET /{db}/_design/posts/_view/items?skip=1', () => {
       return api.get(`/${dbname}/_design/posts/_view/items?skip=1`).expect(200, {
         offset: 1,
         total_rows: 3,
@@ -129,11 +129,11 @@ describe('Design Documents', () => {
             key: db.docs.xpost3._id,
             value: db.docs.xpost3._rev,
           },
-        ]
+        ],
       });
     });
 
-    it('GET /${dbname}/_design/posts/_view/items?limit=2', () => {
+    it('GET /{db}/_design/posts/_view/items?limit=2', () => {
       return api.get(`/${dbname}/_design/posts/_view/items?limit=2`).expect(200, {
         offset: 0,
         total_rows: 2,
@@ -148,11 +148,11 @@ describe('Design Documents', () => {
             key: db.docs.xpost1._id,
             value: db.docs.xpost1._rev,
           },
-        ]
+        ],
       });
     });
 
-    it('GET /${dbname}/_design/posts/_view/items?skip=1&limit=2', () => {
+    it('GET /{db}/_design/posts/_view/items?skip=1&limit=2', () => {
       return api.get(`/${dbname}/_design/posts/_view/items?skip=1&limit=2`).expect(200, {
         offset: 1,
         total_rows: 2,
@@ -167,11 +167,11 @@ describe('Design Documents', () => {
             key: db.docs.xpost2._id,
             value: db.docs.xpost2._rev,
           },
-        ]
+        ],
       });
     });
 
-    it('GET /${dbname}/_design/posts/_view/items?include_docs=true', () => {
+    it('GET /{db}/_design/posts/_view/items?include_docs=true', () => {
       return api.get(`/${dbname}/_design/posts/_view/items?include_docs=true`).expect(200, {
         offset: 0,
         total_rows: 4,
@@ -200,11 +200,11 @@ describe('Design Documents', () => {
             value: db.docs.xpost3._rev,
             doc: db.docs.xpost3,
           },
-        ]
+        ],
       });
     });
 
-    it('GET /${dbname}/_design/posts/_view/items?include_docs=false', () => {
+    it('GET /{db}/_design/posts/_view/items?include_docs=false', () => {
       return api.get(`/${dbname}/_design/posts/_view/items?include_docs=false`).expect(200, {
         offset: 0,
         total_rows: 4,
@@ -229,18 +229,18 @@ describe('Design Documents', () => {
             key: db.docs.xpost3._id,
             value: db.docs.xpost3._rev,
           },
-        ]
+        ],
       });
     });
 
-    it('GET /${dbname}/_design/posts/_view/items?descending=invalid', () => {
+    it('GET /{db}/_design/posts/_view/items?descending=invalid', () => {
       return api.get(`/${dbname}/_design/posts/_view/items?descending=invalid`).expect(400, {
         error: 'query_parse_error',
-        reason: 'Invalid boolean parameter: "invalid"'
+        reason: 'Invalid boolean parameter: "invalid"',
       });
     });
 
-    it('GET /${dbname}/_design/posts/_view/items?descending=true', () => {
+    it('GET /{db}/_design/posts/_view/items?descending=true', () => {
       return api.get(`/${dbname}/_design/posts/_view/items?descending=true`).expect(200, {
         offset: 0,
         total_rows: 4,
@@ -265,11 +265,11 @@ describe('Design Documents', () => {
             key: db.docs.xpost0._id,
             value: db.docs.xpost0._rev,
           },
-        ]
+        ],
       });
     });
 
-    it('GET /${dbname}/_design/posts/_view/items?descending=false', () => {
+    it('GET /{db}/_design/posts/_view/items?descending=false', () => {
       return api.get(`/${dbname}/_design/posts/_view/items?descending=false`).expect(200, {
         offset: 0,
         total_rows: 4,
@@ -294,11 +294,11 @@ describe('Design Documents', () => {
             key: db.docs.xpost3._id,
             value: db.docs.xpost3._rev,
           },
-        ]
+        ],
       });
     });
 
-    it('GET /${dbname}/_design/posts/_view/by_year_count?reduce=false&descending=true', () => {
+    it('GET /{db}/_design/posts/_view/by_year_count?reduce=false&descending=true', () => {
       return api.get(`/${dbname}/_design/posts/_view/by_year_count?reduce=false&descending=true`).expect(200, {
         offset: 0,
         total_rows: 4,
@@ -323,11 +323,11 @@ describe('Design Documents', () => {
             key: db.docs.xpost0.year,
             value: db.docs.xpost0.value,
           },
-        ]
+        ],
       });
     });
 
-    it('GET /${dbname}/_design/posts/_view/by_year_count?reduce=false&descending=false', () => {
+    it('GET /{db}/_design/posts/_view/by_year_count?reduce=false&descending=false', () => {
       return api.get(`/${dbname}/_design/posts/_view/by_year_count?reduce=false&descending=false`).expect(200, {
         offset: 0,
         total_rows: 4,
@@ -352,11 +352,11 @@ describe('Design Documents', () => {
             key: db.docs.xpost1.year,
             value: db.docs.xpost1.value,
           },
-        ]
+        ],
       });
     });
 
-    it('GET /${dbname}/_design/posts/_view/by_year_count?reduce=false&descending=false&skip=1', () => {
+    it('GET /{db}/_design/posts/_view/by_year_count?reduce=false&descending=false&skip=1', () => {
       return api.get(`/${dbname}/_design/posts/_view/by_year_count?reduce=false&descending=false&skip=1`).expect(200, {
         offset: 1,
         total_rows: 3,
@@ -376,22 +376,22 @@ describe('Design Documents', () => {
             key: db.docs.xpost1.year,
             value: db.docs.xpost1.value,
           },
-        ]
+        ],
       });
     });
 
-    it('GET /${dbname}/_design/posts/_view/by_year_count?reduce=true', () => {
+    it('GET /{db}/_design/posts/_view/by_year_count?reduce=true', () => {
       return api.get(`/${dbname}/_design/posts/_view/by_year_count?reduce=true`).expect(200, {
         rows: [
           {
             key: null,
             value: 4,
           },
-        ]
+        ],
       });
     });
 
-    it('GET /${dbname}/_design/posts/_view/by_year_count?reduce=true&group=true', () => {
+    it('GET /{db}/_design/posts/_view/by_year_count?reduce=true&group=true', () => {
       return api.get(`/${dbname}/_design/posts/_view/by_year_count?reduce=true&group=true`).expect(200, {
         rows: [
           {
@@ -406,11 +406,11 @@ describe('Design Documents', () => {
             key: 1990,
             value: 1,
           },
-        ]
+        ],
       });
     });
 
-    it('GET /${dbname}/_design/posts/_view/by_year_count?reduce=true&group=true', () => {
+    it('GET /{db}/_design/posts/_view/by_year_count?reduce=true&group=true', () => {
       return api.get(`/${dbname}/_design/posts/_view/by_year_count?reduce=true&group=true`).expect(200, {
         rows: [
           {
@@ -425,11 +425,11 @@ describe('Design Documents', () => {
             key: 1990,
             value: 1,
           },
-        ]
+        ],
       });
     });
 
-    it('GET /${dbname}/_design/posts/_view/by_year_sum?reduce=false', () => {
+    it('GET /{db}/_design/posts/_view/by_year_sum?reduce=false', () => {
       return api.get(`/${dbname}/_design/posts/_view/by_year_sum?reduce=false`).expect(200, {
         offset: 0,
         total_rows: 4,
@@ -454,22 +454,22 @@ describe('Design Documents', () => {
             key: db.docs.xpost1.year,
             value: db.docs.xpost1.value,
           },
-        ]
+        ],
       });
     });
 
-    it('GET /${dbname}/_design/posts/_view/by_year_sum?reduce=true', () => {
+    it('GET /{db}/_design/posts/_view/by_year_sum?reduce=true', () => {
       return api.get(`/${dbname}/_design/posts/_view/by_year_sum?reduce=true`).expect(200, {
         rows: [
           {
             key: null,
             value: 10,
           },
-        ]
+        ],
       });
     });
 
-    it('GET /${dbname}/_design/posts/_view/by_year_sum?reduce=true&group=true', () => {
+    it('GET /{db}/_design/posts/_view/by_year_sum?reduce=true&group=true', () => {
       return api.get(`/${dbname}/_design/posts/_view/by_year_sum?reduce=true&group=true`).expect(200, {
         rows: [
           {
@@ -484,7 +484,7 @@ describe('Design Documents', () => {
             key: 1990,
             value: 2,
           },
-        ]
+        ],
       });
     });
   });
@@ -497,9 +497,9 @@ describe('Design Documents', () => {
       _id: '_design/posts',
       views: {
         items: {
-          map: '(doc) => {if(doc.type === "posts") emit(doc._id, doc._rev)}'
-        }
-      }
+          map: '(doc) => {if(doc.type === "posts") emit(doc._id, doc._rev)}',
+        },
+      },
     });
 
     return Promise.all([
@@ -516,9 +516,9 @@ describe('Design Documents', () => {
       _id: '_design/posts',
       views: {
         items: {
-          map: '(doc) => {if(doc.type === "posts") emit(doc._id, doc._rev)}'
-        }
-      }
+          map: '(doc) => {if(doc.type === "posts") emit(doc._id, doc._rev)}',
+        },
+      },
     });
 
     return Promise.all([
@@ -532,9 +532,9 @@ describe('Design Documents', () => {
           _id: '_design/posts',
           views: {
             items: {
-              map: '(doc) => {if(doc.type === "posts") emit(doc._id, doc._rev)}'
-            }
-          }
+              map: '(doc) => {if(doc.type === "posts") emit(doc._id, doc._rev)}',
+            },
+          },
         });
       }),
     ]);
@@ -546,9 +546,9 @@ describe('Design Documents', () => {
     const ddoc = {
       views: {
         items: {
-          map: '(doc) => {if(doc.type === "posts") emit(doc._id, doc._rev)}'
-        }
-      }
+          map: '(doc) => {if(doc.type === "posts") emit(doc._id, doc._rev)}',
+        },
+      },
     };
 
     db.addDesign({
@@ -578,9 +578,9 @@ describe('Design Documents', () => {
       _id: '_design/posts',
       views: {
         items: {
-          map: '(doc) => {if(doc.type === "posts") emit(doc._id, doc._rev)}'
-        }
-      }
+          map: '(doc) => {if(doc.type === "posts") emit(doc._id, doc._rev)}',
+        },
+      },
     };
 
     db.addDesign(ddoc);
@@ -607,9 +607,9 @@ describe('Design Documents', () => {
       _id: '_design/posts',
       views: {
         items: {
-          map: '(doc) => {if(doc.type === "posts") emit(doc._id, doc._rev)}'
-        }
-      }
+          map: '(doc) => {if(doc.type === "posts") emit(doc._id, doc._rev)}',
+        },
+      },
     };
 
     db.addDesign(ddoc);

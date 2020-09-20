@@ -51,7 +51,11 @@ module.exports = {
     'import/no-cycle': 'off',
     'import/first': 'off',
     'comma-dangle': ['error', {
-      functions: 'never'
+      arrays: 'always-multiline',
+      objects: 'always-multiline',
+      imports: 'never',
+      exports: 'never',
+      functions: 'never',
     }],
     'prefer-destructuring': 'off',
     'semi': ['error', 'always'],

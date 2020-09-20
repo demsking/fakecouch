@@ -5,8 +5,8 @@
   "main": "dist/fakecouch.js",
   "types": "typings/IFakeCouch.d.ts",
   "scripts": {
-    "lint": "eslint lib/**/*",
-    "lint:fix": "eslint --fix lib/**/*",
+    "lint": "eslint lib/* test/*",
+    "lint:fix": "eslint --fix lib/* test/*",
     "build": "rollup -c",
     "test": "jest --coverage"
   },

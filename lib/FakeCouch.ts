@@ -20,7 +20,7 @@ const sendResponse = (res: Response, [code, body, headers = {}]: [number, any?, 
     'Cache-Control': 'must-revalidate',
     'Content-Type': typeof body === 'string' ? 'text/plain' : 'application/json',
     Server: `Fake CouchDB/${pkg.version}`,
-    Date: new Date().toUTCString()
+    Date: new Date().toUTCString(),
   });
 
   if (body) {
@@ -73,7 +73,7 @@ export default class FakeCouchServer implements IFakeCouch.Server {
       res.status(401);
       res.json({
         error: 'unauthorized',
-        reason: 'You are not a server admin.'
+        reason: 'You are not a server admin.',
       });
       res.end();
     }
@@ -81,7 +81,7 @@ export default class FakeCouchServer implements IFakeCouch.Server {
 
   createScope(): { router: Router; scope: IFakeCouch.Scope; } {
     const router = express.Router({
-      strict: true
+      strict: true,
     });
 
     const auth = (req: Request, res: Response, next: Function) => this.handleAuth(req, res, next);
@@ -104,7 +104,7 @@ export default class FakeCouchServer implements IFakeCouch.Server {
           middlewares.push((req: Request, res: Response) => sendResponse(res, [
             hander.status,
             hander.body,
-            hander.headers
+            hander.headers,
           ]));
         }
       }
@@ -120,7 +120,7 @@ export default class FakeCouchServer implements IFakeCouch.Server {
       post: build('post'),
       put: build('put'),
       delete: build('delete'),
-      copy: build('copy')
+      copy: build('copy'),
     };
 
     return { router, scope };
@@ -176,13 +176,13 @@ export default class FakeCouchServer implements IFakeCouch.Server {
           uuid: uuid(),
           git_sha: 'ff0feea20',
           features: [
-            'access-ready'
+            'access-ready',
           ],
           vendor: {
-            name: pkg.author
+            name: pkg.author,
           },
-          version: pkg.version
-        }
+          version: pkg.version,
+        },
       })
       /**
        * POST /_session
@@ -196,22 +196,22 @@ export default class FakeCouchServer implements IFakeCouch.Server {
 
             res.status(200);
             res.set({
-              'Set-Cookie': 'AuthSession=cm9vdDo1MjA1NTBDMTqmX2qKt1KDR--GUC80DQ6-Ew_XIw; Version=1; Expires=Wed, 02-Sep-3000 06:33:37 GMT; Max-Age=600; Path=/; HttpOnly'
+              'Set-Cookie': 'AuthSession=cm9vdDo1MjA1NTBDMTqmX2qKt1KDR--GUC80DQ6-Ew_XIw; Version=1; Expires=Wed, 02-Sep-3000 06:33:37 GMT; Max-Age=600; Path=/; HttpOnly',
             });
 
             res.json({
               ok: true,
               name: req.body.name,
               roles: [
-                '_admin'
-              ]
+                '_admin',
+              ],
             });
 
             res.end();
           } else {
             res.sendStatus(401);
           }
-        }
+        },
       ])
       /**
        * GET /_session
@@ -224,15 +224,15 @@ export default class FakeCouchServer implements IFakeCouch.Server {
           res.json({
             info: {
               authenticated: 'cookie',
-              authentication_handlers: ['cookie', 'default']
+              authentication_handlers: ['cookie', 'default'],
             },
             ok: true,
             userCtx: {
               name: this.authenticatedUser,
-              roles: this.authenticatedUser ? ['_admin'] : []
-            }
+              roles: this.authenticatedUser ? ['_admin'] : [],
+            },
           });
-        }
+        },
       ])
       /**
        * DELETE /_session
@@ -249,7 +249,7 @@ export default class FakeCouchServer implements IFakeCouch.Server {
        */
       .get('/_active_tasks', {
         status: 501,
-        body: 'Not Yet Implemented'
+        body: 'Not Yet Implemented',
       })
       /**
        * GET /_all_dbs
@@ -264,8 +264,8 @@ export default class FakeCouchServer implements IFakeCouch.Server {
         200,
         req.body.keys.map((dbname: string) => ({
           key: dbname,
-          info: this.databases[dbname].info
-        }))
+          info: this.databases[dbname].info,
+        })),
       ])
       /**
        * GET /_cluster_setup
@@ -274,8 +274,8 @@ export default class FakeCouchServer implements IFakeCouch.Server {
       .get('/_cluster_setup', {
         status: 200,
         body: {
-          state: 'cluster_disabled'
-        }
+          state: 'cluster_disabled',
+        },
       })
       /**
        * POST /_cluster_setup
@@ -283,7 +283,7 @@ export default class FakeCouchServer implements IFakeCouch.Server {
        */
       .post('/_cluster_setup', {
         status: 501,
-        body: 'Not Yet Implemented'
+        body: 'Not Yet Implemented',
       })
       /**
        * GET /_db_updates
@@ -291,7 +291,7 @@ export default class FakeCouchServer implements IFakeCouch.Server {
        */
       .get('/_db_updates', {
         status: 501,
-        body: 'Not Yet Implemented'
+        body: 'Not Yet Implemented',
       })
       /**
        * GET /_membership
@@ -301,12 +301,12 @@ export default class FakeCouchServer implements IFakeCouch.Server {
         status: 200,
         body: {
           all_nodes: [
-            'node1@127.0.0.1'
+            'node1@127.0.0.1',
           ],
           cluster_nodes: [
-            'node1@127.0.0.1'
-          ]
-        }
+            'node1@127.0.0.1',
+          ],
+        },
       })
       /**
        * POST /_replicate
@@ -327,7 +327,7 @@ export default class FakeCouchServer implements IFakeCouch.Server {
               recorded_seq: 28,
               session_id: '142a35854a08e205c47174d91b1f9628',
               start_last_seq: 1,
-              start_time: 'Sun, 11 Aug 2013 20:38:50 GMT'
+              start_time: 'Sun, 11 Aug 2013 20:38:50 GMT',
             },
             {
               doc_write_failures: 0,
@@ -340,14 +340,14 @@ export default class FakeCouchServer implements IFakeCouch.Server {
               recorded_seq: 1,
               session_id: '6314f35c51de3ac408af79d6ee0c1a09',
               start_last_seq: 0,
-              start_time: 'Sat, 10 Aug 2013 15:41:54 GMT'
-            }
+              start_time: 'Sat, 10 Aug 2013 15:41:54 GMT',
+            },
           ],
           ok: true,
           replication_id_version: 3,
           session_id: '142a35854a08e205c47174d91b1f9628',
-          source_last_seq: 28
-        }
+          source_last_seq: 28,
+        },
       })
       /**
        * GET /_scheduler/jobs
@@ -358,8 +358,8 @@ export default class FakeCouchServer implements IFakeCouch.Server {
         body: {
           jobs: [],
           offset: 0,
-          total_rows: 0
-        }
+          total_rows: 0,
+        },
       })
       /**
        * GET /_scheduler/docs
@@ -370,8 +370,8 @@ export default class FakeCouchServer implements IFakeCouch.Server {
         body: {
           docs: [],
           offset: 0,
-          total_rows: 0
-        }
+          total_rows: 0,
+        },
       })
       /**
        * GET /_scheduler/docs/{replicator_db}
@@ -379,7 +379,7 @@ export default class FakeCouchServer implements IFakeCouch.Server {
        */
       .get('/_scheduler/docs/:replicator_db', {
         status: 501,
-        body: 'Not Yet Implemented'
+        body: 'Not Yet Implemented',
       })
       /**
        * GET /_scheduler/docs/{replicator_db}/{docid}
@@ -387,7 +387,7 @@ export default class FakeCouchServer implements IFakeCouch.Server {
        */
       .get('/_scheduler/docs/:replicator_db/:docid', {
         status: 501,
-        body: 'Not Yet Implemented'
+        body: 'Not Yet Implemented',
       })
       /**
        * GET /_node/{node-name}
@@ -395,7 +395,7 @@ export default class FakeCouchServer implements IFakeCouch.Server {
        */
       .get('/_node/_local', {
         status: 200,
-        body: { name: 'node1@127.0.0.1' }
+        body: { name: 'node1@127.0.0.1' },
       })
       /**
        * GET /_node/{node-name}/_stats
@@ -418,40 +418,40 @@ export default class FakeCouchServer implements IFakeCouch.Server {
             percentile: [
               [
                 50,
-                0
+                0,
               ],
               [
                 75,
-                0
+                0,
               ],
               [
                 90,
-                0
+                0,
               ],
               [
                 95,
-                0
+                0,
               ],
               [
                 99,
-                0
+                0,
               ],
               [
                 999,
-                0
-              ]
+                0,
+              ],
             ],
             histogram: [
               [
                 0,
-                0
-              ]
+                0,
+              ],
             ],
-            n: 0
+            n: 0,
           },
           type: 'histogram',
-          desc: 'length of a request inside CouchDB without MochiWeb'
-        }
+          desc: 'length of a request inside CouchDB without MochiWeb',
+        },
       })
       /**
        * GET /_node/{node-name}/_system
@@ -459,7 +459,7 @@ export default class FakeCouchServer implements IFakeCouch.Server {
        */
       .get('/_node/_local/_system', {
         status: 501,
-        body: 'Not Yet Implemented'
+        body: 'Not Yet Implemented',
       })
       /**
        * POST /_node/{node-name}/_restart
@@ -473,8 +473,8 @@ export default class FakeCouchServer implements IFakeCouch.Server {
       .post('/_search_analyze', {
         status: 200,
         body: {
-          tokens: ['run']
-        }
+          tokens: ['run'],
+        },
       })
       /**
        * GET /_utils
@@ -484,8 +484,8 @@ export default class FakeCouchServer implements IFakeCouch.Server {
         status: 301,
         body: undefined,
         headers: {
-          Location: '/_utils/'
-        }
+          Location: '/_utils/',
+        },
       })
       /**
        * GET /_utils/
@@ -498,7 +498,7 @@ export default class FakeCouchServer implements IFakeCouch.Server {
        */
       .get('/_up', {
         status: 200,
-        body: { status: 'ok' }
+        body: { status: 'ok' },
       })
       /**
        * GET /_uuids
@@ -507,8 +507,8 @@ export default class FakeCouchServer implements IFakeCouch.Server {
       .get('/_uuids', (req) => [
         200,
         {
-          uuids: new Array(req.query.count).fill(null).map(() => uuid())
-        }
+          uuids: new Array(req.query.count).fill(null).map(() => uuid()),
+        },
       ])
       /**
        * GET /favicon.ico
@@ -528,8 +528,8 @@ export default class FakeCouchServer implements IFakeCouch.Server {
           state: 'running',
           state_reason: null,
           stopped: 0,
-          total: 24
-        }
+          total: 24,
+        },
       })
       /**
        * GET /_reshard/state
@@ -539,8 +539,8 @@ export default class FakeCouchServer implements IFakeCouch.Server {
         status: 200,
         body: {
           reason: null,
-          state: 'running'
-        }
+          state: 'running',
+        },
       })
       /**
        * PUT /_reshard/state
@@ -548,7 +548,7 @@ export default class FakeCouchServer implements IFakeCouch.Server {
        */
       .put('/_reshard/state', {
         status: 200,
-        body: { ok: true }
+        body: { ok: true },
       })
       /**
        * @see https://docs.couchdb.org/en/latest/api/server/common.html#get--_reshard-jobs
@@ -558,8 +558,8 @@ export default class FakeCouchServer implements IFakeCouch.Server {
         body: {
           jobs: [],
           offset: 0,
-          total_rows: 0
-        }
+          total_rows: 0,
+        },
       })
       /**
        * GET /_reshard/jobs/{jobid}
@@ -577,7 +577,7 @@ export default class FakeCouchServer implements IFakeCouch.Server {
           state_info: {},
           target: [
             'shards/00000000-0fffffff/d1.1553786862',
-            'shards/10000000-1fffffff/d1.1553786862'
+            'shards/10000000-1fffffff/d1.1553786862',
           ],
           type: 'split',
           update_time: '2019-03-28T15:28:08Z',
@@ -585,15 +585,15 @@ export default class FakeCouchServer implements IFakeCouch.Server {
             {
               detail: null,
               timestamp: '2019-03-28T15:28:02Z',
-              type: 'new'
+              type: 'new',
             },
             {
               detail: 'initial_copy',
               timestamp: '2019-03-28T15:28:02Z',
-              type: 'running'
-            }
-          ]
-        }
+              type: 'running',
+            },
+          ],
+        },
       ])
       /**
        * POST /_reshard/jobs
@@ -606,15 +606,15 @@ export default class FakeCouchServer implements IFakeCouch.Server {
             id: '001-30d7848a6feeb826d5e3ea5bb7773d672af226fd34fd84a8fb1ca736285df557',
             node: 'node1@127.0.0.1',
             ok: true,
-            shard: 'shards/80000000-ffffffff/db3.1554148353'
+            shard: 'shards/80000000-ffffffff/db3.1554148353',
           },
           {
             id: '001-c2d734360b4cb3ff8b3feaccb2d787bf81ce2e773489eddd985ddd01d9de8e01',
             node: 'node2@127.0.0.1',
             ok: true,
-            shard: 'shards/80000000-ffffffff/db3.1554148353'
-          }
-        ]
+            shard: 'shards/80000000-ffffffff/db3.1554148353',
+          },
+        ],
       })
       /**
        * DELETE /_reshard/jobs/{jobid}
@@ -622,7 +622,7 @@ export default class FakeCouchServer implements IFakeCouch.Server {
        */
       .delete('/_reshard/jobs/:jobid', {
         status: 200,
-        body: { ok: true }
+        body: { ok: true },
       })
       /**
        * GET /_reshard/jobs/{jobid}/state
@@ -632,8 +632,8 @@ export default class FakeCouchServer implements IFakeCouch.Server {
         status: 200,
         body: {
           reason: null,
-          state: 'running'
-        }
+          state: 'running',
+        },
       })
       /**
        * PUT /_reshard/jobs/{jobid}/state
@@ -641,7 +641,7 @@ export default class FakeCouchServer implements IFakeCouch.Server {
        */
       .put('/_reshard/jobs/:jobid/state', {
         status: 200,
-        body: { ok: true }
+        body: { ok: true },
       });
   }
 
@@ -658,8 +658,8 @@ export default class FakeCouchServer implements IFakeCouch.Server {
           400,
           {
             error: 'bad_request',
-            reason: 'Invalid database name'
-          }
+            reason: 'Invalid database name',
+          },
         ];
 
       case 404:
@@ -667,8 +667,8 @@ export default class FakeCouchServer implements IFakeCouch.Server {
           404,
           {
             error: 'not_found',
-            reason: 'Database does not exist.'
-          }
+            reason: 'Database does not exist.',
+          },
         ];
     }
 
@@ -697,8 +697,8 @@ export default class FakeCouchServer implements IFakeCouch.Server {
             412,
             {
               error: 'file_exists',
-              reason: 'The database could not be created, the file already exists.'
-            }
+              reason: 'The database could not be created, the file already exists.',
+            },
           ];
         }
 
@@ -706,7 +706,7 @@ export default class FakeCouchServer implements IFakeCouch.Server {
 
         return [
           201,
-          { ok: true }
+          { ok: true },
         ];
       })
       /**
@@ -718,7 +718,7 @@ export default class FakeCouchServer implements IFakeCouch.Server {
 
         return [
           200,
-          { ok: true }
+          { ok: true },
         ];
       }, 404))
       /**
@@ -732,8 +732,8 @@ export default class FakeCouchServer implements IFakeCouch.Server {
               409,
               {
                 error: 'duplicate',
-                reason: 'A Conflicting Document with same ID already exists'
-              }
+                reason: 'A Conflicting Document with same ID already exists',
+              },
             ];
           }
         }
@@ -745,11 +745,11 @@ export default class FakeCouchServer implements IFakeCouch.Server {
           {
             id: doc._id,
             ok: true,
-            rev: doc._rev
+            rev: doc._rev,
           },
           {
-            Location: `${this.serveUrl}/${db.name}/${doc._id}`
-          }
+            Location: `${this.serveUrl}/${db.name}/${doc._id}`,
+          },
         ];
       }))
       /**
@@ -761,15 +761,15 @@ export default class FakeCouchServer implements IFakeCouch.Server {
         const items = docs.map((doc) => ({
           doc,
           value: {
-            rev: doc._rev
+            rev: doc._rev,
           },
           id: doc._id,
-          key: doc._id
+          key: doc._id,
         }));
 
         return [
           200,
-          FakeDatabase.parseDesignViewItems(items, req.query)
+          FakeDatabase.parseDesignViewItems(items, req.query),
         ];
       }))
       /**
@@ -781,15 +781,15 @@ export default class FakeCouchServer implements IFakeCouch.Server {
         const items = docs.map((doc: IFakeCouch.DocumentRef) => ({
           doc,
           value: {
-            rev: doc._rev
+            rev: doc._rev,
           },
           id: doc._id,
-          key: doc._id
+          key: doc._id,
         }));
 
         return [
           200,
-          FakeDatabase.parseDesignViewItems(items, req.query)
+          FakeDatabase.parseDesignViewItems(items, req.query),
         ];
       }))
       /**
@@ -801,15 +801,15 @@ export default class FakeCouchServer implements IFakeCouch.Server {
         const items = docs.map((doc: IFakeCouch.DocumentRef) => ({
           doc,
           value: {
-            rev: doc._rev
+            rev: doc._rev,
           },
           id: doc._id,
-          key: doc._id
+          key: doc._id,
         }));
 
         return [
           200,
-          FakeDatabase.parseDesignViewItems(items, req.query)
+          FakeDatabase.parseDesignViewItems(items, req.query),
         ];
       }))
       /**
@@ -821,15 +821,15 @@ export default class FakeCouchServer implements IFakeCouch.Server {
         const items = docs.map((doc: IFakeCouch.DocumentRef) => ({
           doc,
           value: {
-            rev: doc._rev
+            rev: doc._rev,
           },
           id: doc._id,
-          key: doc._id
+          key: doc._id,
         }));
 
         return [
           200,
-          FakeDatabase.parseDesignViewItems(items, req.query)
+          FakeDatabase.parseDesignViewItems(items, req.query),
         ];
       }))
       /**
@@ -854,17 +854,17 @@ export default class FakeCouchServer implements IFakeCouch.Server {
                 _revisions: {
                   start: 1,
                   ids: [
-                    doc._rev.split('-')[1]
-                  ]
-                }
-              }
-            }
-          ]
+                    doc._rev.split('-')[1],
+                  ],
+                },
+              },
+            },
+          ],
         }));
 
         return [
           200,
-          { results }
+          { results },
         ];
       }))
       /**
@@ -876,14 +876,14 @@ export default class FakeCouchServer implements IFakeCouch.Server {
         const result = docs.map((doc: IFakeCouch.DocumentRef) => ({
           ok: true,
           id: doc._id,
-          rev: doc._rev
+          rev: doc._rev,
         }));
 
         db.buildDesignIndexes();
 
         return [
           201,
-          result
+          result,
         ];
       }))
       /**
@@ -917,8 +917,8 @@ export default class FakeCouchServer implements IFakeCouch.Server {
           {
             result: 'created',
             id: index.ddoc,
-            name: index.name
-          }
+            name: index.name,
+          },
         ];
       }))
       /**
@@ -930,8 +930,8 @@ export default class FakeCouchServer implements IFakeCouch.Server {
           200,
           {
             total_rows: db.indexes.length,
-            indexes: db.indexes
-          }
+            indexes: db.indexes,
+          },
         ];
       }))
       /**
@@ -950,7 +950,7 @@ export default class FakeCouchServer implements IFakeCouch.Server {
       .post('/:dbname/_explain', (req) => this.handleDatabaseRequest(req, (db) => {
         return [
           501,
-          'Not Yet Implemented'
+          'Not Yet Implemented',
         ];
       }))
       /**
@@ -960,12 +960,12 @@ export default class FakeCouchServer implements IFakeCouch.Server {
       .get('/:dbname/_shards', (req) => this.handleDatabaseRequest(req, (db) => [200, {
         shards: {
           '00000000-1fffffff': [
-            'couchdb@node1.example.com'
+            'couchdb@node1.example.com',
           ],
           '20000000-3fffffff': [
-            'couchdb@node1.example.com'
-          ]
-        }
+            'couchdb@node1.example.com',
+          ],
+        },
       }]))
       /**
        * GET /{db}/_shards/{docid}
@@ -974,15 +974,15 @@ export default class FakeCouchServer implements IFakeCouch.Server {
       .get('/:dbname/_shards/:docid', (req) => this.handleDatabaseRequest(req, (db) => [200, {
         range: 'e0000000-ffffffff',
         nodes: [
-          'node1@127.0.0.1'
-        ]
+          'node1@127.0.0.1',
+        ],
       }]))
       /**
        * POST /{db}/_sync_shards
        * @see https://docs.couchdb.org/en/latest/api/database/shard.html#db-sync-shards
        */
       .post('/:dbname/_sync_shards', (req) => this.handleDatabaseRequest(req, (db) => [200, {
-        ok: true
+        ok: true,
       }]))
       /**
        * GET /{db}/_changes
@@ -991,7 +991,7 @@ export default class FakeCouchServer implements IFakeCouch.Server {
       .get('/:dbname/_changes', (req) => this.handleDatabaseRequest(req, (db) => {
         return [
           501,
-          'Not Yet Implemented'
+          'Not Yet Implemented',
         ];
       }))
       /**
@@ -999,7 +999,7 @@ export default class FakeCouchServer implements IFakeCouch.Server {
        * @see https://docs.couchdb.org/en/latest/api/database/compact.html
        */
       .post('/:dbname/_compact', (req) => this.handleDatabaseRequest(req, (db) => [202, {
-        ok: true
+        ok: true,
       }]))
       /**
        * POST /{db}/_compact/{ddoc}
@@ -1016,7 +1016,7 @@ export default class FakeCouchServer implements IFakeCouch.Server {
        */
       .post('/:dbname/_ensure_full_commit', (req) => this.handleDatabaseRequest(req, (db) => [201, {
         ok: true,
-        instance_start_time: '0'
+        instance_start_time: '0',
       }]))
       /**
        * POST /{db}/_view_cleanup
@@ -1037,7 +1037,7 @@ export default class FakeCouchServer implements IFakeCouch.Server {
 
         return [
           200,
-          { ok: true }
+          { ok: true },
         ];
       }))
       /**
@@ -1047,18 +1047,18 @@ export default class FakeCouchServer implements IFakeCouch.Server {
       .post('/:dbname/_purge', (req) => this.handleDatabaseRequest(req, (db) => {
         const result = {
           purge_seq: null,
-          purged: {} as Record<string, any>
+          purged: {} as Record<string, any>,
         };
 
         for (const _id in req.body) {
           result.purged[_id] = [
-            req.body[_id].pop()
+            req.body[_id].pop(),
           ];
         }
 
         return [
           201,
-          result
+          result,
         ];
       }))
       /**
@@ -1077,18 +1077,18 @@ export default class FakeCouchServer implements IFakeCouch.Server {
        */
       .post('/:dbname/_missing_revs', (req) => this.handleDatabaseRequest(req, (db) => {
         const result = {
-          missing_revs: {} as any
+          missing_revs: {} as any,
         };
 
         for (const _id in req.body) {
           result.missing_revs[_id] = [
-            req.body[_id].shift()
+            req.body[_id].shift(),
           ];
         }
 
         return [
           200,
-          result
+          result,
         ];
       }))
       /**
@@ -1098,7 +1098,7 @@ export default class FakeCouchServer implements IFakeCouch.Server {
       .post('/:dbname/_revs_diff', (req) => this.handleDatabaseRequest(req, (db) => {
         return [
           501,
-          'Not Yet Implemented'
+          'Not Yet Implemented',
         ];
       }))
       /**
@@ -1107,7 +1107,7 @@ export default class FakeCouchServer implements IFakeCouch.Server {
        */
       .get('/:dbname/_revs_limit', (req) => this.handleDatabaseRequest(req, (db) => [
         200,
-        `${db.revisionLimit}`
+        `${db.revisionLimit}`,
       ]))
       /**
        * PUT /{db}/_revs_limit
@@ -1140,8 +1140,8 @@ export default class FakeCouchServer implements IFakeCouch.Server {
           {
             offset: 0,
             rows: docs,
-            total_rows: docs.length
-          }
+            total_rows: docs.length,
+          },
         ];
       }))
       /**
@@ -1153,15 +1153,15 @@ export default class FakeCouchServer implements IFakeCouch.Server {
         const items = docs.map((doc: IFakeCouch.DocumentRef) => ({
           doc,
           value: {
-            rev: doc._rev
+            rev: doc._rev,
           },
           id: doc._id,
-          key: doc._id
+          key: doc._id,
         }));
 
         return [
           200,
-          FakeDatabase.parseDesignViewItems(items, req.query)
+          FakeDatabase.parseDesignViewItems(items, req.query),
         ];
       }))
       /**
@@ -1197,8 +1197,8 @@ export default class FakeCouchServer implements IFakeCouch.Server {
           {
             ok: true,
             id: doc._id,
-            rev: doc._rev
-          }
+            rev: doc._rev,
+          },
         ];
       }))
       /**
@@ -1218,8 +1218,8 @@ export default class FakeCouchServer implements IFakeCouch.Server {
             {
               ok: true,
               id: doc._id,
-              rev: doc._rev
-            }
+              rev: doc._rev,
+            },
           ];
         }
 
@@ -1246,7 +1246,7 @@ export default class FakeCouchServer implements IFakeCouch.Server {
           const doc = db.addDoc({
             ...db.localDocs[docid],
             _rev: undefined,
-            _id: destination
+            _id: destination,
           });
 
           return [
@@ -1254,8 +1254,8 @@ export default class FakeCouchServer implements IFakeCouch.Server {
             {
               ok: true,
               id: doc._id,
-              rev: doc._rev
-            }
+              rev: doc._rev,
+            },
           ];
         }
 
@@ -1303,8 +1303,8 @@ export default class FakeCouchServer implements IFakeCouch.Server {
           {
             ok: true,
             id: doc._id,
-            rev: doc._rev
-          }
+            rev: doc._rev,
+          },
         ];
       }))
       /**
@@ -1322,8 +1322,8 @@ export default class FakeCouchServer implements IFakeCouch.Server {
             {
               ok: true,
               id: doc._id,
-              rev: doc._rev
-            }
+              rev: doc._rev,
+            },
           ];
         }
 
@@ -1350,7 +1350,7 @@ export default class FakeCouchServer implements IFakeCouch.Server {
           const doc = db.addDoc({
             ...db.docs[docid],
             _rev: undefined,
-            _id: destination
+            _id: destination,
           });
 
           return [
@@ -1358,8 +1358,8 @@ export default class FakeCouchServer implements IFakeCouch.Server {
             {
               ok: true,
               id: doc._id,
-              rev: doc._rev
-            }
+              rev: doc._rev,
+            },
           ];
         }
 
@@ -1391,15 +1391,15 @@ export default class FakeCouchServer implements IFakeCouch.Server {
           try {
             return [
               200,
-              db.getDesignView(ddocid, viename, req.query)
+              db.getDesignView(ddocid, viename, req.query),
             ];
           } catch (err) {
             return [
               400,
               {
                 error: 'query_parse_error',
-                reason: err.message
-              }
+                reason: err.message,
+              },
             ];
           }
         }
@@ -1450,8 +1450,8 @@ export default class FakeCouchServer implements IFakeCouch.Server {
           {
             ok: true,
             id: design._id,
-            rev: design._rev
-          }
+            rev: design._rev,
+          },
         ];
       }))
       /**
@@ -1471,8 +1471,8 @@ export default class FakeCouchServer implements IFakeCouch.Server {
             {
               ok: true,
               id: design._id,
-              rev: design._rev
-            }
+              rev: design._rev,
+            },
           ];
         }
 
@@ -1499,7 +1499,7 @@ export default class FakeCouchServer implements IFakeCouch.Server {
           const doc = db.addDoc({
             ...db.docs[ddoc],
             _rev: undefined,
-            _id: destination
+            _id: destination,
           });
 
           return [
@@ -1507,8 +1507,8 @@ export default class FakeCouchServer implements IFakeCouch.Server {
             {
               ok: true,
               id: doc._id,
-              rev: doc._rev
-            }
+              rev: doc._rev,
+            },
           ];
         }
 

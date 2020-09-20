@@ -6,7 +6,7 @@ import { IFakeCouch } from '../typings/IFakeCouch';
 
 const couch: IFakeCouch.Server = new FakeCouchDB({
   port: 59843,
-  logger: false
+  logger: false,
 });
 
 const api = supertest(couch.serveUrl);
@@ -64,7 +64,7 @@ describe('Database', () => {
         expect(typeof info.cluster.w).toBe('number');
         expect(typeof info.cluster.r).toBe('number');
         expect(typeof info.instance_start_time).toBe('string');
-      });;
+      });
   });
 
   it('PUT /{db}', () => {
@@ -73,7 +73,7 @@ describe('Database', () => {
     return api.put(`/${dbname}`).expect(201, { ok: true })
       .then(() => api.put(`/${dbname}`).expect(412, {
         error: 'file_exists',
-        reason: 'The database could not be created, the file already exists.'
+        reason: 'The database could not be created, the file already exists.',
       }));
   });
 
@@ -102,7 +102,7 @@ describe('Database', () => {
       })
       .then(() => api.post(`/${dbname}`).send({ _id: '001' }).expect(409, {
         error: 'duplicate',
-        reason: 'A Conflicting Document with same ID already exists'
+        reason: 'A Conflicting Document with same ID already exists',
       }));
   });
 
@@ -121,10 +121,10 @@ describe('Database', () => {
 
     const expectedRows = Object.values(db.docs).map((doc) => ({
       value: {
-        rev: doc._rev
+        rev: doc._rev,
       },
       id: doc._id,
-      key: doc._id
+      key: doc._id,
     }));
 
     const expectedRowsWithDocs = expectedRows.slice(1, 3).map((item) => {
@@ -135,43 +135,43 @@ describe('Database', () => {
       .expect(200, {
         offset: 0,
         total_rows: expectedRows.length,
-        rows: expectedRows
+        rows: expectedRows,
       })
       .then(() => api.get(`${endpoint}?include_docs=true&skip=1&limit=2`)
-      .expect(200, {
-        offset: 1,
-        total_rows: expectedRowsWithDocs.length,
-        rows: expectedRowsWithDocs
-      }))
+        .expect(200, {
+          offset: 1,
+          total_rows: expectedRowsWithDocs.length,
+          rows: expectedRowsWithDocs,
+        }))
       .then(() => api.post(endpoint).send({ keys: ['x001'] })
-      .expect(200, {
-        offset: 0,
-        total_rows: 1,
-        rows: [
-          {
-            id: 'x001',
-            key: 'x001',
-            value: {
-              rev: db.docs.x001._rev
-            }
-          }
-        ]
-      }))
-      .then(() => api.post(`${endpoint}?include_docs=true`).send({ keys: ['x001'] })
-      .expect(200, {
-        offset: 0,
-        total_rows: 1,
-        rows: [
-          {
-            id: 'x001',
-            key: 'x001',
-            value: {
-              rev: db.docs.x001._rev
+        .expect(200, {
+          offset: 0,
+          total_rows: 1,
+          rows: [
+            {
+              id: 'x001',
+              key: 'x001',
+              value: {
+                rev: db.docs.x001._rev,
+              },
             },
-            doc: db.docs.x001
-          }
-        ]
-      }));
+          ],
+        }))
+      .then(() => api.post(`${endpoint}?include_docs=true`).send({ keys: ['x001'] })
+        .expect(200, {
+          offset: 0,
+          total_rows: 1,
+          rows: [
+            {
+              id: 'x001',
+              key: 'x001',
+              value: {
+                rev: db.docs.x001._rev,
+              },
+              doc: db.docs.x001,
+            },
+          ],
+        }));
   });
 
   it('GET /{db}/_design_docs', () => {
@@ -182,9 +182,9 @@ describe('Database', () => {
       _id: '_design/posts',
       views: {
         items: {
-          map: '(doc) => {if(doc.type === "posts") emit(doc._id, doc._rev)}'
-        }
-      }
+          map: '(doc) => {if(doc.type === "posts") emit(doc._id, doc._rev)}',
+        },
+      },
     });
 
     return api.get(endpoint).expect(200, {
@@ -195,9 +195,9 @@ describe('Database', () => {
           id: ddoc._id,
           key: ddoc._id,
           value: {
-            rev: ddoc._rev
-          }
-        }
+            rev: ddoc._rev,
+          },
+        },
       ],
     });
   });
@@ -210,17 +210,17 @@ describe('Database', () => {
       _id: '_design/posts',
       views: {
         items: {
-          map: '(doc) => {if(doc.type === "posts") emit(doc._id, doc._rev)}'
-        }
-      }
+          map: '(doc) => {if(doc.type === "posts") emit(doc._id, doc._rev)}',
+        },
+      },
     });
     const ddocpages = db.addDesign({
       _id: '_design/pages',
       views: {
         items: {
-          map: '(doc) => {if(doc.type === "pages") emit(doc._id, doc._rev)}'
-        }
-      }
+          map: '(doc) => {if(doc.type === "pages") emit(doc._id, doc._rev)}',
+        },
+      },
     });
 
     return api.post(endpoint).send({ keys: [ddocpages._id] }).expect(200, {
@@ -231,9 +231,9 @@ describe('Database', () => {
           id: ddocpages._id,
           key: ddocpages._id,
           value: {
-            rev: ddocpages._rev
-          }
-        }
+            rev: ddocpages._rev,
+          },
+        },
       ],
     });
   });
@@ -260,7 +260,7 @@ describe('Database', () => {
     ]);
 
     const query = Object.values(db.docs).map((doc) => ({
-      id: doc._id
+      id: doc._id,
     }));
 
     const expectedRows = Object.values(db.docs).map((doc) => ({
@@ -274,16 +274,16 @@ describe('Database', () => {
             _revisions: {
               start: 1,
               ids: [
-                doc._rev.split('-')[1]
-              ]
-            }
-          }
-        }
-      ]
+                doc._rev.split('-')[1],
+              ],
+            },
+          },
+        },
+      ],
     }));
 
     return api.post(endpoint).send({ docs: query }).expect(200, {
-      results: expectedRows
+      results: expectedRows,
     });
   });
 
@@ -332,17 +332,17 @@ describe('Database', () => {
         limit: 2,
         selector: {
           type: 'posts',
-        }
+        },
       };
 
-      db.addDocs([ ...docs ]);
+      db.addDocs([...docs]);
 
       return api.post(endpoint).send({ limit: 2 }).expect(400)
         .then(() => api.post(endpoint).send(query).expect(200, {
           docs: [
             db.docs.x001,
             db.docs.x100,
-          ]
+          ],
         }));
     });
 
@@ -355,18 +355,18 @@ describe('Database', () => {
         limit: 2,
         selector: {
           'data.title': {
-            $regex: 'Post (1|3|5)'
-          }
-        }
+            $regex: 'Post (1|3|5)',
+          },
+        },
       };
 
-      db.addDocs([ ...docs ]);
+      db.addDocs([...docs]);
 
       return api.post(endpoint).send(query).expect(200, {
         docs: [
           db.docs.x100,
           db.docs.x110,
-        ]
+        ],
       });
     });
 
@@ -379,17 +379,17 @@ describe('Database', () => {
         limit: 2,
         selector: {
           'data.title': {
-            $regex: 'Post (1|3|4)'
-          }
+            $regex: 'Post (1|3|4)',
+          },
         },
         fields: [
           'type',
-          'data.n'
+          'data.n',
         ],
-        execution_stats: true
+        execution_stats: true,
       };
 
-      db.addDocs([ ...docs ]);
+      db.addDocs([...docs]);
 
       return api.post(endpoint).send(query).expect(200).then(({ body }) => {
         expect(typeof body.execution_stats.execution_time_ms).toBe('number');
@@ -401,14 +401,14 @@ describe('Database', () => {
             {
               type: db.docs.x100.type,
               data: {
-                n: db.docs.x100.data.n
-              }
+                n: db.docs.x100.data.n,
+              },
             },
             {
               type: db.docs.x101.type,
               data: {
-                n: db.docs.x101.data.n
-              }
+                n: db.docs.x101.data.n,
+              },
             },
           ],
           execution_stats: {
@@ -416,8 +416,8 @@ describe('Database', () => {
             total_docs_examined: 7,
             total_quorum_docs_examined: 0,
             results_returned: 2,
-            execution_time_ms: -1
-          }
+            execution_time_ms: -1,
+          },
         });
       });
     });
@@ -431,17 +431,17 @@ describe('Database', () => {
           'data.n': {
             $gt: 1,
             $lt: 3,
-          }
-        }
+          },
+        },
       };
 
-      db.addDocs([ ...docs ]);
+      db.addDocs([...docs]);
 
       return api.post(endpoint).send(query).expect(200, {
         docs: [
           db.docs.x001,
           db.docs.x011,
-        ]
+        ],
       });
     });
 
@@ -454,18 +454,18 @@ describe('Database', () => {
           'data.n': {
             $gte: 2,
             $lte: 3,
-          }
-        }
+          },
+        },
       };
 
-      db.addDocs([ ...docs ]);
+      db.addDocs([...docs]);
 
       return api.post(endpoint).send(query).expect(200, {
         docs: [
           db.docs.x001,
           db.docs.x011,
           db.docs.x100,
-        ]
+        ],
       });
     });
 
@@ -475,17 +475,17 @@ describe('Database', () => {
       const db = couch.addDatabase(dbname);
       const query = {
         selector: {
-          'data.desc': null
-        }
+          'data.desc': null,
+        },
       };
 
-      db.addDocs([ ...docs ]);
+      db.addDocs([...docs]);
 
       return api.post(endpoint).send(query).expect(200, {
         docs: [
           db.docs.x011,
           db.docs.x110,
-        ]
+        ],
       });
     });
 
@@ -496,18 +496,18 @@ describe('Database', () => {
       const query = {
         selector: {
           type: {
-            $eq: 'pages'
-          }
-        }
+            $eq: 'pages',
+          },
+        },
       };
 
-      db.addDocs([ ...docs ]);
+      db.addDocs([...docs]);
 
       return api.post(endpoint).send(query).expect(200, {
         docs: [
           db.docs.x010,
           db.docs.x011,
-        ]
+        ],
       });
     });
 
@@ -518,18 +518,18 @@ describe('Database', () => {
       const query = {
         selector: {
           type: {
-            $ne: 'posts'
-          }
-        }
+            $ne: 'posts',
+          },
+        },
       };
 
-      db.addDocs([ ...docs ]);
+      db.addDocs([...docs]);
 
       return api.post(endpoint).send(query).expect(200, {
         docs: [
           db.docs.x010,
           db.docs.x011,
-        ]
+        ],
       });
     });
 
@@ -539,16 +539,16 @@ describe('Database', () => {
       const db = couch.addDatabase(dbname);
       const query = {
         selector: {
-          'data.list': [1]
-        }
+          'data.list': [1],
+        },
       };
 
-      db.addDocs([ ...docs ]);
+      db.addDocs([...docs]);
 
       return api.post(endpoint).send(query).expect(200, {
         docs: [
           db.docs.x110,
-        ]
+        ],
       });
     });
 
@@ -559,17 +559,17 @@ describe('Database', () => {
       const query = {
         selector: {
           'data.list': {
-            $in: [2]
-          }
-        }
+            $in: [2],
+          },
+        },
       };
 
-      db.addDocs([ ...docs ]);
+      db.addDocs([...docs]);
 
       return api.post(endpoint).send(query).expect(200, {
         docs: [
           db.docs.x101,
-        ]
+        ],
       });
     });
 
@@ -580,17 +580,17 @@ describe('Database', () => {
       const query = {
         selector: {
           'data.list': {
-            $nin: [2]
-          }
-        }
+            $nin: [2],
+          },
+        },
       };
 
-      db.addDocs([ ...docs ]);
+      db.addDocs([...docs]);
 
       return api.post(endpoint).send(query).expect(200, {
         docs: [
           db.docs.x110,
-        ]
+        ],
       });
     });
 
@@ -601,17 +601,17 @@ describe('Database', () => {
       const query = {
         selector: {
           'data.list': {
-            $size: 2
-          }
-        }
+            $size: 2,
+          },
+        },
       };
 
-      db.addDocs([ ...docs ]);
+      db.addDocs([...docs]);
 
       return api.post(endpoint).send(query).expect(200, {
         docs: [
           db.docs.x101,
-        ]
+        ],
       });
     });
 
@@ -622,18 +622,18 @@ describe('Database', () => {
       const query = {
         selector: {
           'data.slug': {
-            $exists: true
-          }
-        }
+            $exists: true,
+          },
+        },
       };
 
-      db.addDocs([ ...docs ]);
+      db.addDocs([...docs]);
 
       return api.post(endpoint).send(query).expect(200, {
         docs: [
           db.docs.x010,
           db.docs.x011,
-        ]
+        ],
       });
     });
 
@@ -644,12 +644,12 @@ describe('Database', () => {
       const query = {
         selector: {
           'data.slug': {
-            $exists: false
-          }
-        }
+            $exists: false,
+          },
+        },
       };
 
-      db.addDocs([ ...docs ]);
+      db.addDocs([...docs]);
 
       return api.post(endpoint).send(query).expect(200, {
         docs: [
@@ -658,7 +658,7 @@ describe('Database', () => {
           db.docs.x100,
           db.docs.x101,
           db.docs.x110,
-        ]
+        ],
       });
     });
 
@@ -669,12 +669,12 @@ describe('Database', () => {
       const query = {
         selector: {
           'data.desc': {
-            $type: 'string'
-          }
-        }
+            $type: 'string',
+          },
+        },
       };
 
-      db.addDocs([ ...docs ]);
+      db.addDocs([...docs]);
 
       return api.post(endpoint).send(query).expect(200, {
         docs: [
@@ -683,7 +683,7 @@ describe('Database', () => {
           db.docs.x010,
           db.docs.x100,
           db.docs.x101,
-        ]
+        ],
       });
     });
 
@@ -694,18 +694,18 @@ describe('Database', () => {
       const query = {
         selector: {
           'data.enabled': {
-            $type: 'boolean'
-          }
-        }
+            $type: 'boolean',
+          },
+        },
       };
 
-      db.addDocs([ ...docs ]);
+      db.addDocs([...docs]);
 
       return api.post(endpoint).send(query).expect(200, {
         docs: [
           db.docs.x000,
           db.docs.x001,
-        ]
+        ],
       });
     });
 
@@ -716,18 +716,18 @@ describe('Database', () => {
       const query = {
         selector: {
           'data.desc': {
-            $type: 'null'
-          }
-        }
+            $type: 'null',
+          },
+        },
       };
 
-      db.addDocs([ ...docs ]);
+      db.addDocs([...docs]);
 
       return api.post(endpoint).send(query).expect(200, {
         docs: [
           db.docs.x011,
           db.docs.x110,
-        ]
+        ],
       });
     });
 
@@ -738,12 +738,12 @@ describe('Database', () => {
       const query = {
         selector: {
           'data.n': {
-            $type: 'number'
-          }
-        }
+            $type: 'number',
+          },
+        },
       };
 
-      db.addDocs([ ...docs ]);
+      db.addDocs([...docs]);
 
       return api.post(endpoint).send(query).expect(200, {
         docs: [
@@ -754,7 +754,7 @@ describe('Database', () => {
           db.docs.x100,
           db.docs.x101,
           db.docs.x110,
-        ]
+        ],
       });
     });
 
@@ -765,18 +765,18 @@ describe('Database', () => {
       const query = {
         selector: {
           'data.list': {
-            $type: 'array'
-          }
-        }
+            $type: 'array',
+          },
+        },
       };
 
-      db.addDocs([ ...docs ]);
+      db.addDocs([...docs]);
 
       return api.post(endpoint).send(query).expect(200, {
         docs: [
           db.docs.x101,
           db.docs.x110,
-        ]
+        ],
       });
     });
 
@@ -787,12 +787,12 @@ describe('Database', () => {
       const query = {
         selector: {
           data: {
-            $type: 'object'
-          }
-        }
+            $type: 'object',
+          },
+        },
       };
 
-      db.addDocs([ ...docs ]);
+      db.addDocs([...docs]);
 
       return api.post(endpoint).send(query).expect(200, {
         docs: [
@@ -803,7 +803,7 @@ describe('Database', () => {
           db.docs.x100,
           db.docs.x101,
           db.docs.x110,
-        ]
+        ],
       });
     });
 
@@ -814,19 +814,19 @@ describe('Database', () => {
       const query = {
         selector: {
           'data.n': {
-            $mod: [2, 0]
-          }
-        }
+            $mod: [2, 0],
+          },
+        },
       };
 
-      db.addDocs([ ...docs ]);
+      db.addDocs([...docs]);
 
       return api.post(endpoint).send(query).expect(200, {
         docs: [
           db.docs.x001,
           db.docs.x011,
           db.docs.x101,
-        ]
+        ],
       });
     });
 
@@ -837,15 +837,15 @@ describe('Database', () => {
       const query = {
         selector: {
           'data.n': {
-            $mod: ['2', 0]
-          }
-        }
+            $mod: ['2', 0],
+          },
+        },
       };
 
-      db.addDocs([ ...docs ]);
+      db.addDocs([...docs]);
 
       return api.post(endpoint).send(query).expect(200, {
-        docs: []
+        docs: [],
       });
     });
 
@@ -856,15 +856,15 @@ describe('Database', () => {
       const query = {
         selector: {
           'data.n': {
-            $mod: [2, '0']
-          }
-        }
+            $mod: [2, '0'],
+          },
+        },
       };
 
-      db.addDocs([ ...docs ]);
+      db.addDocs([...docs]);
 
       return api.post(endpoint).send(query).expect(200, {
-        docs: []
+        docs: [],
       });
     });
 
@@ -875,12 +875,12 @@ describe('Database', () => {
       const query = {
         selector: {
           'data.n': {
-            $invalidOperator: 'x'
-          }
-        }
+            $invalidOperator: 'x',
+          },
+        },
       };
 
-      db.addDocs([ ...docs ]);
+      db.addDocs([...docs]);
 
       return api.post(endpoint).send(query).expect(400);
     });
@@ -891,14 +891,14 @@ describe('Database', () => {
       const db = couch.addDatabase(dbname);
       const query = {
         selector: {
-          type: 'posts'
+          type: 'posts',
         },
         sort: [
-          'data.s'
-        ]
+          'data.s',
+        ],
       };
 
-      db.addDocs([ ...docs ]);
+      db.addDocs([...docs]);
 
       return api.post(endpoint).send(query).expect(200, {
         docs: [
@@ -907,7 +907,7 @@ describe('Database', () => {
           db.docs.x101,
           db.docs.x110,
           db.docs.x000,
-        ]
+        ],
       });
     });
 
@@ -917,15 +917,15 @@ describe('Database', () => {
       const db = couch.addDatabase(dbname);
       const query = {
         selector: {
-          type: 'posts'
+          type: 'posts',
         },
         sort: [
-          { 'data.s': 'asc' }
+          { 'data.s': 'asc' },
         ],
-        fields: ['_id']
+        fields: ['_id'],
       };
 
-      db.addDocs([ ...docs ]);
+      db.addDocs([...docs]);
 
       return api.post(endpoint).send(query).expect(200, {
         docs: [
@@ -934,7 +934,7 @@ describe('Database', () => {
           { _id: db.docs.x101._id },
           { _id: db.docs.x110._id },
           { _id: db.docs.x000._id },
-        ]
+        ],
       });
     });
 
@@ -944,14 +944,14 @@ describe('Database', () => {
       const db = couch.addDatabase(dbname);
       const query = {
         selector: {
-          type: 'posts'
+          type: 'posts',
         },
         sort: [
-          { 'data.s': 'desc' }
-        ]
+          { 'data.s': 'desc' },
+        ],
       };
 
-      db.addDocs([ ...docs ]);
+      db.addDocs([...docs]);
 
       return api.post(endpoint).send(query).expect(200, {
         docs: [
@@ -960,7 +960,7 @@ describe('Database', () => {
           db.docs.x101,
           db.docs.x001,
           db.docs.x100,
-        ]
+        ],
       });
     });
 
@@ -970,11 +970,11 @@ describe('Database', () => {
       const db = couch.addDatabase(dbname);
       const query = {
         selector: {
-          $and: {}
-        }
+          $and: {},
+        },
       };
 
-      db.addDocs([ ...docs ]);
+      db.addDocs([...docs]);
 
       return api.post(endpoint).send(query).expect(400);
     });
@@ -987,21 +987,21 @@ describe('Database', () => {
         selector: {
           $and: [
             {
-              type: 'posts'
+              type: 'posts',
             },
             {
-              'data.desc': null
-            }
-          ]
-        }
+              'data.desc': null,
+            },
+          ],
+        },
       };
 
-      db.addDocs([ ...docs ]);
+      db.addDocs([...docs]);
 
       return api.post(endpoint).send(query).expect(200, {
         docs: [
           db.docs.x110,
-        ]
+        ],
       });
     });
 
@@ -1011,11 +1011,11 @@ describe('Database', () => {
       const db = couch.addDatabase(dbname);
       const query = {
         selector: {
-          $or: {}
-        }
+          $or: {},
+        },
       };
 
-      db.addDocs([ ...docs ]);
+      db.addDocs([...docs]);
 
       return api.post(endpoint).send(query).expect(400);
     });
@@ -1028,24 +1028,24 @@ describe('Database', () => {
         selector: {
           $or: [
             {
-              'data.title': 'Post 1'
+              'data.title': 'Post 1',
             },
             {
               'data.title': {
-                $regex: '(Post|Page) 1'
-              }
-            }
-          ]
-        }
+                $regex: '(Post|Page) 1',
+              },
+            },
+          ],
+        },
       };
 
-      db.addDocs([ ...docs ]);
+      db.addDocs([...docs]);
 
       return api.post(endpoint).send(query).expect(200, {
         docs: [
           db.docs.x000,
           db.docs.x010,
-        ]
+        ],
       });
     });
 
@@ -1055,11 +1055,11 @@ describe('Database', () => {
       const db = couch.addDatabase(dbname);
       const query = {
         selector: {
-          $not: []
-        }
+          $not: [],
+        },
       };
 
-      db.addDocs([ ...docs ]);
+      db.addDocs([...docs]);
 
       return api.post(endpoint).send(query).expect(400);
     });
@@ -1072,19 +1072,19 @@ describe('Database', () => {
         selector: {
           $not: {
             'data.desc': {
-              $ne: null
-            }
-          }
-        }
+              $ne: null,
+            },
+          },
+        },
       };
 
-      db.addDocs([ ...docs ]);
+      db.addDocs([...docs]);
 
       return api.post(endpoint).send(query).expect(200, {
         docs: [
           db.docs.x011,
           db.docs.x110,
-        ]
+        ],
       });
     });
 
@@ -1097,17 +1097,17 @@ describe('Database', () => {
           $and: [
             {
               year: {
-                $gte: 1900
+                $gte: 1900,
               },
             },
             {
               year: {
-                $lte: 1910
+                $lte: 1910,
               },
-            }
+            },
           ],
           $nor: { year: 1901 },
-        }
+        },
       };
 
       db.addDocs([
@@ -1135,21 +1135,21 @@ describe('Database', () => {
           $and: [
             {
               year: {
-                $gte: 1900
+                $gte: 1900,
               },
             },
             {
               year: {
-                $lte: 1910
+                $lte: 1910,
               },
-            }
+            },
           ],
           $nor: [
             { year: 1901 },
             { year: 1905 },
             { year: 1907 },
-          ]
-        }
+          ],
+        },
       };
 
       db.addDocs([
@@ -1172,7 +1172,7 @@ describe('Database', () => {
           db.docs.x1903,
           db.docs.x1904,
           db.docs.x1910,
-        ]
+        ],
       });
     });
 
@@ -1183,12 +1183,12 @@ describe('Database', () => {
       const query = {
         selector: {
           genre: {
-            $all: 'Comedy'
-          }
-        }
+            $all: 'Comedy',
+          },
+        },
       };
 
-      db.addDocs([ ...docs ]);
+      db.addDocs([...docs]);
 
       return api.post(endpoint).send(query).expect(400);
     });
@@ -1200,9 +1200,9 @@ describe('Database', () => {
       const query = {
         selector: {
           genre: {
-            $all: ['Comedy', 'Short']
-          }
-        }
+            $all: ['Comedy', 'Short'],
+          },
+        },
       };
 
       db.addDocs([
@@ -1222,7 +1222,7 @@ describe('Database', () => {
           db.docs.short2,
           db.docs.comedy2,
           db.docs.short3,
-        ]
+        ],
       });
     });
 
@@ -1234,10 +1234,10 @@ describe('Database', () => {
         selector: {
           genre: {
             $elemMatch: {
-              $eq: 'Horror'
-            }
-          }
-        }
+              $eq: 'Horror',
+            },
+          },
+        },
       };
 
       db.addDocs([
@@ -1253,7 +1253,7 @@ describe('Database', () => {
           db.docs.x001,
           db.docs.x011,
           db.docs.x101,
-        ]
+        ],
       });
     });
 
@@ -1265,10 +1265,10 @@ describe('Database', () => {
         selector: {
           genre: {
             $allMatch: {
-              $eq: 'Horror'
-            }
-          }
-        }
+              $eq: 'Horror',
+            },
+          },
+        },
       };
 
       db.addDocs([
@@ -1282,7 +1282,7 @@ describe('Database', () => {
       return api.post(endpoint).send(query).expect(200, {
         docs: [
           db.docs.x101,
-        ]
+        ],
       });
     });
 
@@ -1294,10 +1294,10 @@ describe('Database', () => {
         selector: {
           cameras: {
             $keyMapMatch: {
-              $eq: 'secondary'
-            }
-          }
-        }
+              $eq: 'secondary',
+            },
+          },
+        },
       };
 
       db.addDocs([
@@ -1312,7 +1312,7 @@ describe('Database', () => {
         docs: [
           db.docs.x011,
           db.docs.x100,
-        ]
+        ],
       });
     });
   });
@@ -1326,15 +1326,15 @@ describe('Database', () => {
       name: 'nameindex',
       partitioned: true,
       index: {
-        fields: ['name']
-      }
+        fields: ['name'],
+      },
     };
 
     const payload2 = {
       partitioned: true,
       index: {
-        fields: ['name']
-      }
+        fields: ['name'],
+      },
     };
 
     couch.addDatabase(dbname);
@@ -1343,7 +1343,7 @@ describe('Database', () => {
       .then(() => api.post(endpoint).send(payload1).expect(200, {
         result: 'created',
         id: '_design/nameindex',
-        name: 'nameindex'
+        name: 'nameindex',
       }))
       .then(() => api.post(endpoint).send(payload2).expect(200))
       .then(({ body }) => {
@@ -1363,8 +1363,8 @@ describe('Database', () => {
       name: 'nameindex',
       partitioned: true,
       index: {
-        fields: ['name']
-      }
+        fields: ['name'],
+      },
     });
 
     return api.get(endpoint).expect(200, {
@@ -1377,10 +1377,10 @@ describe('Database', () => {
           def: {
             fields: [
               {
-                _id: 'asc'
-              }
-            ]
-          }
+                _id: 'asc',
+              },
+            ],
+          },
         },
         {
           ddoc: '_design/nameindex',
@@ -1389,12 +1389,12 @@ describe('Database', () => {
           def: {
             fields: [
               {
-                name: 'asc'
-              }
-            ]
-          }
-        }
-      ]
+                name: 'asc',
+              },
+            ],
+          },
+        },
+      ],
     });
   });
 
@@ -1407,8 +1407,8 @@ describe('Database', () => {
       name: 'nameindex',
       partitioned: true,
       index: {
-        fields: ['name']
-      }
+        fields: ['name'],
+      },
     });
 
     return Promise.all([
@@ -1436,12 +1436,12 @@ describe('Database', () => {
     return api.get(endpoint).expect(200, {
       shards: {
         '00000000-1fffffff': [
-          'couchdb@node1.example.com'
+          'couchdb@node1.example.com',
         ],
         '20000000-3fffffff': [
-          'couchdb@node1.example.com'
-        ]
-      }
+          'couchdb@node1.example.com',
+        ],
+      },
     });
   });
 
@@ -1454,8 +1454,8 @@ describe('Database', () => {
     return api.get(endpoint).expect(200, {
       range: 'e0000000-ffffffff',
       nodes: [
-        'node1@127.0.0.1'
-      ]
+        'node1@127.0.0.1',
+      ],
     });
   });
 
@@ -1466,7 +1466,7 @@ describe('Database', () => {
     couch.addDatabase(dbname);
 
     return api.post(endpoint).expect(200, {
-      ok: true
+      ok: true,
     });
   });
 
@@ -1496,9 +1496,9 @@ describe('Database', () => {
       _id: '_design/posts',
       views: {
         items: {
-          map: '(doc) => {if(doc.type === "posts") emit(doc._id, doc._rev)}'
-        }
-      }
+          map: '(doc) => {if(doc.type === "posts") emit(doc._id, doc._rev)}',
+        },
+      },
     });
 
     return Promise.all([
@@ -1516,7 +1516,7 @@ describe('Database', () => {
 
     return api.post(endpoint).expect(201, {
       ok: true,
-      instance_start_time: '0'
+      instance_start_time: '0',
     });
   });
 
@@ -1539,15 +1539,15 @@ describe('Database', () => {
       admins: {
         names: [],
         roles: [
-          '_admin'
-        ]
+          '_admin',
+        ],
       },
       members: {
         names: [],
         roles: [
-          '_admin'
-        ]
-      }
+          '_admin',
+        ],
+      },
     });
   });
 
@@ -1558,12 +1558,12 @@ describe('Database', () => {
     const securityObject = {
       admins: {
         names: ['superuser'],
-        roles: ['admins']
+        roles: ['admins'],
       },
       members: {
         names: ['user1', 'user2'],
-        roles: ['developers']
-      }
+        roles: ['developers'],
+      },
     };
 
     return api.put(endpoint)
@@ -1578,8 +1578,8 @@ describe('Database', () => {
     const payload = {
       doc01: [
         '1-b06fcd1c1c9e0ec7c480ee8aa467bf3b',
-        '2-c50a32451890a3f1c3e423334cc92745'
-      ]
+        '2-c50a32451890a3f1c3e423334cc92745',
+      ],
     };
 
     couch.addDatabase(dbname);
@@ -1588,9 +1588,9 @@ describe('Database', () => {
       purge_seq: null,
       purged: {
         doc01: [
-          '2-c50a32451890a3f1c3e423334cc92745'
-        ]
-      }
+          '2-c50a32451890a3f1c3e423334cc92745',
+        ],
+      },
     });
   });
 
@@ -1618,8 +1618,8 @@ describe('Database', () => {
     const payload = {
       doc01: [
         '1-b06fcd1c1c9e0ec7c480ee8aa467bf3b',
-        '2-c50a32451890a3f1c3e423334cc92745'
-      ]
+        '2-c50a32451890a3f1c3e423334cc92745',
+      ],
     };
 
     couch.addDatabase(dbname);
@@ -1627,9 +1627,9 @@ describe('Database', () => {
     return api.post(endpoint).send(payload).expect(200, {
       missing_revs: {
         doc01: [
-          '1-b06fcd1c1c9e0ec7c480ee8aa467bf3b'
-        ]
-      }
+          '1-b06fcd1c1c9e0ec7c480ee8aa467bf3b',
+        ],
+      },
     });
   });
 

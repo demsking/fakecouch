@@ -7,7 +7,7 @@ import { IFakeCouch } from '../typings/IFakeCouch';
 
 const couch: IFakeCouch.Server = new FakeCouchDB({
   port: 59841,
-  logger: false
+  logger: false,
 });
 
 const api = supertest(couch.serveUrl);
@@ -33,9 +33,9 @@ describe('Server', () => {
           'access-ready',
         ],
         vendor: {
-          name: pkg.author
+          name: pkg.author,
         },
-        version: pkg.version
+        version: pkg.version,
       });
     });
   });
@@ -57,12 +57,12 @@ describe('Server', () => {
 
     return api.post('/_dbs_info')
       .send({
-        keys: []
+        keys: [],
       })
       .expect(200, [])
       .then(() => api.put(`/${dbname}`).expect(201))
       .then(() => api.post('/_dbs_info').send({
-        keys: [dbname]
+        keys: [dbname],
       }))
       .then(({ body, status }) => {
         expect(status).toBe(200);
@@ -104,7 +104,7 @@ describe('Server', () => {
 
   it('GET /_cluster_setup', () => {
     return api.get('/_cluster_setup').expect(200, {
-      state: 'cluster_disabled'
+      state: 'cluster_disabled',
     });
   });
 
@@ -119,11 +119,11 @@ describe('Server', () => {
   it('GET /_membership', () => {
     return api.get('/_membership').expect(200, {
       all_nodes: [
-        'node1@127.0.0.1'
+        'node1@127.0.0.1',
       ],
       cluster_nodes: [
-        'node1@127.0.0.1'
-      ]
+        'node1@127.0.0.1',
+      ],
     });
   });
 
@@ -141,7 +141,7 @@ describe('Server', () => {
           recorded_seq: 28,
           session_id: '142a35854a08e205c47174d91b1f9628',
           start_last_seq: 1,
-          start_time: 'Sun, 11 Aug 2013 20:38:50 GMT'
+          start_time: 'Sun, 11 Aug 2013 20:38:50 GMT',
         },
         {
           doc_write_failures: 0,
@@ -154,13 +154,13 @@ describe('Server', () => {
           recorded_seq: 1,
           session_id: '6314f35c51de3ac408af79d6ee0c1a09',
           start_last_seq: 0,
-          start_time: 'Sat, 10 Aug 2013 15:41:54 GMT'
-        }
+          start_time: 'Sat, 10 Aug 2013 15:41:54 GMT',
+        },
       ],
       ok: true,
       replication_id_version: 3,
       session_id: '142a35854a08e205c47174d91b1f9628',
-      source_last_seq: 28
+      source_last_seq: 28,
     });
   });
 
@@ -168,7 +168,7 @@ describe('Server', () => {
     return api.get('/_scheduler/jobs').expect(200, {
       jobs: [],
       offset: 0,
-      total_rows: 0
+      total_rows: 0,
     });
   });
 
@@ -176,7 +176,7 @@ describe('Server', () => {
     return api.get('/_scheduler/docs').expect(200, {
       docs: [],
       offset: 0,
-      total_rows: 0
+      total_rows: 0,
     });
   });
 
@@ -190,7 +190,7 @@ describe('Server', () => {
 
   it('GET /_node/{node-name}', () => {
     return api.get('/_node/_local').expect(200, {
-      name: 'node1@127.0.0.1'
+      name: 'node1@127.0.0.1',
     });
   });
 
@@ -210,39 +210,39 @@ describe('Server', () => {
         percentile: [
           [
             50,
-            0
+            0,
           ],
           [
             75,
-            0
+            0,
           ],
           [
             90,
-            0
+            0,
           ],
           [
             95,
-            0
+            0,
           ],
           [
             99,
-            0
+            0,
           ],
           [
             999,
-            0
-          ]
+            0,
+          ],
         ],
         histogram: [
           [
             0,
-            0
-          ]
+            0,
+          ],
         ],
-        n: 0
+        n: 0,
       },
       type: 'histogram',
-      desc: 'length of a request inside CouchDB without MochiWeb'
+      desc: 'length of a request inside CouchDB without MochiWeb',
     });
   });
 
@@ -256,7 +256,7 @@ describe('Server', () => {
 
   it('POST /_search_analyze', () => {
     return api.post('/_search_analyze').expect(200, {
-      tokens: [ 'run' ]
+      tokens: ['run'],
     });
   });
 
@@ -294,14 +294,14 @@ describe('Server', () => {
       state: 'running',
       state_reason: null,
       stopped: 0,
-      total: 24
+      total: 24,
     });
   });
 
   it('GET /_reshard/state', () => {
     return api.get('/_reshard/state').expect(200, {
       reason: null,
-      state: 'running'
+      state: 'running',
     });
   });
 
@@ -313,7 +313,7 @@ describe('Server', () => {
     return api.get('/_reshard/jobs').expect(200, {
       jobs: [],
       offset: 0,
-      total_rows: 0
+      total_rows: 0,
     });
   });
 
@@ -332,7 +332,7 @@ describe('Server', () => {
   it('GET /_reshard/jobs/{jobid}/state', () => {
     return api.get('/_reshard/jobs/001/state').expect(200, {
       reason: null,
-      state: 'running'
+      state: 'running',
     });
   });
 

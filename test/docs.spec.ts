@@ -6,7 +6,7 @@ import { IFakeCouch } from '../typings/IFakeCouch';
 
 const couch: IFakeCouch.Server = new FakeCouchDB({
   port: 59845,
-  logger: false
+  logger: false,
 });
 
 const api = supertest(couch.serveUrl);
@@ -29,7 +29,7 @@ describe('Documents', () => {
 
     return Promise.all([
       api.head(`/${dbname}/404`).expect(404),
-      api.head(`/${dbname}/x1899`).expect(200)
+      api.head(`/${dbname}/x1899`).expect(200),
     ]);
   });
 
