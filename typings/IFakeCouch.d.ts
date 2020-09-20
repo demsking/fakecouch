@@ -162,9 +162,9 @@ export namespace IFakeCouch {
     readonly docs: Record<string, DocumentRef>;
     readonly localDocs: Record<string, DocumentRef>;
     readonly designs: Record<string, DocumentRef>;
-    readonly indexes: IFakeCouch.IndexDefinition[];
+    readonly indexes: IndexDefinition[];
     readonly security: Record<'admins' | 'members', SecurityObject>;
-    revisionLimit: number;
+    readonly revisionLimit: number;
 
     addDoc(doc: Document, docid?: string): DocumentRef;
     addDocs(docs: Document[]): void;
@@ -172,7 +172,7 @@ export namespace IFakeCouch {
     addIndex(index: Index): IndexDefinition;
     deleteIndex(ddoc: string, indexName: string): boolean;
 
-    addDesign(ddoc: IFakeCouch.DesignDocument): DocumentRef;
+    addDesign(ddoc: DesignDocument): DocumentRef;
     hasDesign(ddocid: string): boolean;
     deleteDesign(ddocid: string): void;
   }

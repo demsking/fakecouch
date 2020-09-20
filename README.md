@@ -46,6 +46,51 @@ describe('My Awesome API Tests', () => {
 });
 ```
 
+## API
+
+```ts
+type Options = {
+  port?: number;
+  logger?: boolean;
+};
+
+declare class Server {
+  readonly serveUrl: string;
+  readonly serverPort: number;
+  readonly databases: Record<string, IFakeCouch.Database>;
+
+  constructor({ port = 5984, logger = false }: Options);
+
+  setup(): void;
+  reset(): void;
+  authenticate(): void;
+  addDatabase(dbname: string): IFakeCouch.Database;
+}
+
+declare class Database {
+  readonly name: string;
+  readonly docs: Record<string, IFakeCouch.DocumentRef>;
+  readonly localDocs: Record<string, IFakeCouch.DocumentRef>;
+  readonly designs: Record<string, IFakeCouch.DocumentRef>;
+  readonly indexes: IFakeCouch.IndexDefinition[];
+  readonly security: Record<'admins' | 'members', IFakeCouch.SecurityObject>;
+  readonly revisionLimit: number;
+
+  addDoc(doc: Document, docid?: string): IFakeCouch.DocumentRef;
+  addDocs(docs: Document[]): void;
+
+  addIndex(index: Index): IFakeCouch.IndexDefinition;
+  deleteIndex(ddoc: string, indexName: string): boolean;
+
+  addDesign(ddoc: IFakeCouch.DesignDocument): IFakeCouch.DocumentRef;
+  hasDesign(ddocid: string): boolean;
+  deleteDesign(ddocid: string): void;
+}
+```
+
+See [typings/IFakeCouch.d.ts](typings/IFakeCouch.d.ts) for the comple API
+interfaces.
+
 ## License
 
 Under the MIT license.
