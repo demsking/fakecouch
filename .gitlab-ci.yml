@@ -31,24 +31,11 @@ test & coverage:
     paths:
       - coverage/
 
-pages:
-  stage: publish
-  dependencies:
-    - test & coverage
-  script:
-    - mv coverage/lcov-report/ public/
-  artifacts:
-    paths:
-      - public
-  only:
-    - master
-  environment:
-    name: coverage report
-    url: https://vuedoc.gitlab.io/parser
-
 package:
   stage: publish
   script:
+    - npm ci
+    - npm run build
     - npm pack
   artifacts:
     paths:
@@ -61,6 +48,8 @@ publish:
     - triggers
   script:
     - echo '//registry.npmjs.org/:_authToken=${NPM_TOKEN}' > .npmrc
+    - npm ci
+    - npm run build
     - npm publish
   environment:
     name: npm

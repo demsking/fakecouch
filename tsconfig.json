@@ -5,7 +5,7 @@
   ],
   "compilerOptions": {
     "allowJs": true,
-    "target": "ES2019",
+    "target": "ES2015",
     "module": "CommonJS",
     "strict": true,
     "jsx": "preserve",
@@ -14,6 +14,7 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "experimentalDecorators": false,
+    "resolveJsonModule": true,
     "sourceMap": false,
     "baseUrl": ".",
     "outDir": "dist",
@@ -22,7 +23,7 @@
       "jest"
     ],
     "lib": [
-      "ES2019"
+      "ES2015"
     ]
   },
   "include": [
