@@ -34,6 +34,8 @@ test & coverage:
 package:
   stage: publish
   script:
+    - npm ci
+    - npm run build
     - npm pack
   artifacts:
     paths:

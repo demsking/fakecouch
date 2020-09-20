@@ -1,20 +1,25 @@
 import sucrase from '@rollup/plugin-sucrase';
 import resolve from '@rollup/plugin-node-resolve';
+import { terser } from 'rollup-plugin-terser';
 
 export default {
   input: 'lib/FakeCouch.ts',
   output: {
+    name: 'fakecouch',
     file: 'dist/fakecouch.js',
-    format: 'es',
-    name: 'api-server'
+    format: 'cjs',
+    sourcemap: true,
+    compact: true,
   },
   plugins: [
     resolve({
-      extensions: ['.js', '.ts']
+      extensions: ['.js', '.json', '.ts'],
     }),
     sucrase({
       exclude: ['node_modules/**'],
-      transforms: ['typescript']
-    })
-  ]
+      transforms: ['typescript'],
+    }),
+    terser(),
+  ],
+  onwarn(message) {},
 };
