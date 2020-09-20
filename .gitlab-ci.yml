@@ -49,6 +49,7 @@ publish:
   script:
     - echo '//registry.npmjs.org/:_authToken=${NPM_TOKEN}' > .npmrc
     - npm ci
+    - npm run build
     - npm publish
   environment:
     name: npm
