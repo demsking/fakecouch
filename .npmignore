@@ -2,3 +2,6 @@ test
 coverage
 .*
 *.tgz
+*.png
+*.svg
+*.js
