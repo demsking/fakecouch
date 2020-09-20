@@ -5,6 +5,7 @@
   "main": "dist/fakecouch.js",
   "types": "typings/IFakeCouch.d.ts",
   "scripts": {
+    "prepublish": "npm run build",
     "lint": "eslint lib/* test/*",
     "lint:fix": "eslint --fix lib/* test/*",
     "build": "rollup -c",
