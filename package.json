@@ -1,6 +1,6 @@
 {
   "name": "fakecouch",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "A fake CouchDB server for testing",
   "main": "dist/fakecouch.js",
   "types": "typings/IFakeCouch.d.ts",
