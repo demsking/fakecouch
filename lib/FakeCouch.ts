@@ -728,6 +728,22 @@ export default class FakeCouchServer implements IFakeCouch.Server {
       .post('/:dbname', (req) => this.handleDatabaseRequest(req, (db) => {
         if (req.body._id) {
           if (db.docs.hasOwnProperty(req.body._id)) {
+            if (req.body._rev === db.docs[req.body._id]._rev) {
+              const doc = db.addDoc(req.body);
+
+              return [
+                201,
+                {
+                  id: doc._id,
+                  ok: true,
+                  rev: doc._rev,
+                },
+                {
+                  Location: `${this.serveUrl}/${db.name}/${doc._id}`,
+                },
+              ];
+            }
+
             return [
               409,
               {
@@ -1293,7 +1309,29 @@ export default class FakeCouchServer implements IFakeCouch.Server {
        */
       .put('/:dbname/:docid', (req) => this.handleDatabaseRequest(req, (db) => {
         if (db.docs.hasOwnProperty(req.params.docid)) {
-          return [409];
+          if (req.body._rev === db.docs[req.params.docid]._rev) {
+            const doc = db.addDoc(req.body);
+
+            return [
+              201,
+              {
+                id: doc._id,
+                ok: true,
+                rev: doc._rev,
+              },
+              {
+                Location: `${this.serveUrl}/${db.name}/${doc._id}`,
+              },
+            ];
+          }
+
+          return [
+            409,
+            {
+              error: 'duplicate',
+              reason: 'A Conflicting Document with same ID already exists',
+            },
+          ];
         }
 
         const doc = db.addDoc(req.body, req.params.docid);
