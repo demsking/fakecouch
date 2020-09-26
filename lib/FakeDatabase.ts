@@ -2,6 +2,7 @@
 /* eslint-disable camelcase */
 
 const dotProp = require('dot-prop');
+const dcopy = require('deep-copy');
 const uuid = require('uuid-random');
 
 import { IFakeCouch } from '../typings/IFakeCouch';
@@ -116,6 +117,7 @@ export default class FakeDatabase implements IFakeCouch.Database {
   revisionLimit = 1000;
 
   readonly docs: Record<string, IFakeCouch.DocumentRef> = {};
+  readonly revisions: Record<string, IFakeCouch.DocumentRef[]> = {};
   readonly localDocs: Record<string, IFakeCouch.DocumentRef> = {};
   readonly designs: Record<string, IFakeCouch.DocumentRef> = {};
   readonly storage: Record<string, Record<string, LocalView>> = {};
@@ -228,8 +230,8 @@ export default class FakeDatabase implements IFakeCouch.Database {
     };
   }
 
-  _addDoc(body: Record<string, any>, docid?: string): IFakeCouch.DocumentRef {
-    const doc = { ...body };
+  _addDoc(body: IFakeCouch.Document, docid?: string): IFakeCouch.DocumentRef {
+    const doc: IFakeCouch.DocumentRef = dcopy(body) as any;
 
     if (!doc._id) {
       doc._id = docid || uuid();
@@ -240,12 +242,19 @@ export default class FakeDatabase implements IFakeCouch.Database {
 
       this.localDocs[doc._id] = doc as any;
     } else {
-      doc._rev = `1-${uuid()}`;
-      this.docs[doc._id] = doc as any;
+      this.docs[doc._id] = doc;
+
+      if (!this.revisions.hasOwnProperty(doc._id)) {
+        this.revisions[doc._id] = [];
+      }
+
+      this.revisions[doc._id].unshift(doc as any);
 
       if (doc._deleted) {
         this.info.doc_del_count++;
       } else {
+        doc._rev = this.revisions[doc._id].length + '-' + uuid();
+
         this.info.doc_count++;
       }
     }
@@ -333,6 +342,10 @@ export default class FakeDatabase implements IFakeCouch.Database {
 
         rows.forEach((doc) => {
           (global as any).emit = (key: any, value: any) => {
+            if (doc._deleted) {
+              return false;
+            }
+
             view.items.push({ id: doc._id, key, value, doc });
 
             if (view.reducer === '_sum') {

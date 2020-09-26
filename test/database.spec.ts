@@ -87,23 +87,31 @@ describe('Database', () => {
 
   it('POST /{db}', () => {
     const dbname = uuid();
+    const db = couch.addDatabase(dbname);
+    const doc = { _id: 'x1900', type: 'posts', year: 1900 };
 
-    couch.addDatabase(dbname);
+    db.addDocs([
+      { _id: 'x1899', type: 'posts', year: 1899 },
+    ]);
 
-    return api.post(`/${dbname}`)
-      .send({ data: 'hello' })
-      .expect(201)
-      .then(() => api.post(`/${dbname}`).send({ _id: '001', data: 'hello' }).expect(201))
-      .then(({ body, headers }) => {
-        expect(body.ok).toBeTruthy();
-        expect(body.id).toBe('001');
-        expect(typeof body.rev).toBe('string');
-        expect(headers.location).toBe(`${couch.serveUrl}/${dbname}/001`);
-      })
-      .then(() => api.post(`/${dbname}`).send({ _id: '001' }).expect(409, {
+    return Promise.all([
+      api.post(`/${dbname}`).send({ _id: 'x1899' }).expect(409, {
         error: 'duplicate',
         reason: 'A Conflicting Document with same ID already exists',
-      }));
+      }),
+      api.post(`/${dbname}`).send(db.docs.x1899).expect(201),
+      api.post(`/${dbname}`).send({ year: 1900 }).expect(201),
+      api.post(`/${dbname}`).send(doc).expect(201).then(({ body }) => {
+        expect(typeof body.rev).toBe('string');
+
+        delete body.rev;
+
+        expect(body).toEqual({
+          ok: true,
+          id: 'x1900',
+        });
+      }),
+    ]);
   });
 
   it('GET, POST /{db}/_all_docs', () => {

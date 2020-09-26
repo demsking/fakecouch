@@ -26,6 +26,7 @@ module.exports = {
   },
   rules: {
     'camelcase': 'off',
+    'prefer-template': 'off',
     'import/no-unresolved': 'error',
     'import/extensions': 'off',
     'no-underscore-dangle': 'off',

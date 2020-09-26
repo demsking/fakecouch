@@ -64,6 +64,7 @@ describe('Documents', () => {
 
     return Promise.all([
       api.put(`/${dbname}/x1899`).send({ _id: 'x1899' }).expect(409),
+      api.put(`/${dbname}/x1899`).send(db.docs.x1899).expect(201),
       api.put(`/${dbname}/x1900`).send(doc).expect(200).then(({ body }) => {
         expect(typeof body.rev).toBe('string');
 
