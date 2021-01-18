@@ -6,6 +6,7 @@ export namespace IFakeCouch {
   export type Options = {
     port?: number;
     logger?: boolean;
+    headers?: Record<string, string>;
   };
 
   export type Headers = Record<string, string>;
@@ -180,6 +181,7 @@ export namespace IFakeCouch {
   export class Server {
     readonly serveUrl: string;
     readonly serverPort: number;
+    readonly headers: Record<string, string>;
     readonly databases: Record<string, Database>;
 
     constructor(options: Options);
