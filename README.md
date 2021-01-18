@@ -25,7 +25,7 @@ const FakeCouchServer = require('fakecouch');
 
 const couch = new FakeCouchServer({
   port: 5984,
-  logger: false
+  logger: false,
 });
 
 const api = supertest('<endpoint of my awesome API server>');
@@ -43,6 +43,21 @@ describe('My Awesome API Tests', () => {
       .then(() => api.put('/api/awesome/resource').expect(201))
       .then(() => api.head('/api/awesome/resource').expect(200));
   });
+});
+```
+
+**Enable CORS using `options.headers`**
+
+```js
+const FakeCouchServer = require('fakecouch');
+
+const couch = new FakeCouchServer({
+  port: 5984,
+  logger: false,
+  headers: {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept',
+  },
 });
 ```
 
