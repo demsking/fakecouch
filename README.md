@@ -5,6 +5,7 @@ A fake CouchDB server for testing.
 [![npm](https://img.shields.io/npm/v/fakecouch.svg)](https://www.npmjs.com/package/fakecouch)
 [![Build status](https://gitlab.com/demsking/fakecouch/badges/master/pipeline.svg)](https://gitlab.com/demsking/fakecouch/pipelines)
 [![Test coverage](https://gitlab.com/demsking/fakecouch/badges/master/coverage.svg)](https://gitlab.com/demsking/fakecouch/pipelines)
+[![Buy me a beer](https://img.shields.io/badge/Buy%20me-a%20beer-1f425f.svg)](https://www.buymeacoffee.com/demsking)
 
 > **Disclaimer**: This is a fake CouchDB server which implements endpoints
   used in common applications. It does not claim to be use as a regular
@@ -61,7 +62,7 @@ const couch = new FakeCouchServer({
 });
 ```
 
-## API
+## Fake CouchDB API
 
 ```ts
 type Options = {
