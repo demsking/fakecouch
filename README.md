@@ -52,11 +52,13 @@ describe('My Awesome API Tests', () => {
 type Options = {
   port?: number;
   logger?: boolean;
+  headers?: Record<string, string>;
 };
 
 declare class Server {
   readonly serveUrl: string;
   readonly serverPort: number;
+  readonly headers: Map<string, string>;
   readonly databases: Record<string, IFakeCouch.Database>;
 
   constructor({ port = 5984, logger = false }: Options);
