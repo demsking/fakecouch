@@ -181,7 +181,7 @@ export namespace IFakeCouch {
   export class Server {
     readonly serveUrl: string;
     readonly serverPort: number;
-    readonly headers: Map<string, string>;
+    readonly headers: Record<string, string>;
     readonly databases: Record<string, Database>;
 
     constructor(options: Options);

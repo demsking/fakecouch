@@ -58,7 +58,7 @@ type Options = {
 declare class Server {
   readonly serveUrl: string;
   readonly serverPort: number;
-  readonly headers: Map<string, string>;
+  readonly headers: Record<string, string>;
   readonly databases: Record<string, IFakeCouch.Database>;
 
   constructor({ port = 5984, logger = false }: Options);

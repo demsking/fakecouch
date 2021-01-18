@@ -33,7 +33,7 @@ const sendResponse = (res: Response, [code, body, headers = {}]: [number, any?, 
 export default class FakeCouchServer implements IFakeCouch.Server {
   serverPort: number;
   serveUrl: string;
-  headers: Map<string, string> = new Map();
+  headers: Record<string, string> = {};
   databases: Record<string, FakeDatabase> = {};
   authenticatedUser: string | null = null;
   server?: Server;
@@ -45,13 +45,11 @@ export default class FakeCouchServer implements IFakeCouch.Server {
     this.serveUrl = `http://localhost:${port}`;
     this.app = express();
 
-    this.app.set('x-powered-by', true);
+    this.app.set('x-powered-by', false);
     this.app.set('strict routing', true);
 
     if (headers) {
-      for (const key in headers) {
-        this.headers.set(key, headers[key]);
-      }
+      this.headers = headers;
     }
 
     if (logger) {
@@ -93,7 +91,15 @@ export default class FakeCouchServer implements IFakeCouch.Server {
 
     const auth = (req: Request, res: Response, next: Function) => this.handleAuth(req, res, next);
     const build = (method: string) => (path: string, hander: IFakeCouch.Handler): IFakeCouch.Scope => {
-      const middlewares: Function[] = [];
+      const middlewares: Function[] = [
+        (req: Request, res: Response, next: Function) => {
+          for (const key in this.headers) {
+            res.append(key, this.headers[key]);
+          }
+
+          next();
+        },
+      ];
 
       if (hander instanceof Array) {
         middlewares.push(...hander);
@@ -146,10 +152,6 @@ export default class FakeCouchServer implements IFakeCouch.Server {
 
     this.app.use(router);
     this.app.use('*', (req, res) => res.status(501).send(`No implementation for ${req.method} ${req.url}`));
-    this.app.use('*', (req, res, next) => {
-      this.headers.forEach((value, key) => res.setHeader(key, value));
-      next();
-    });
 
     this.app.use((err: Error, req: Request, res: Response, next: Function) => {
       process.stderr.write(`${err.stack}\n`);
